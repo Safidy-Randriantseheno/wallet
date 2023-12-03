@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: Wallet API
+  version: 1.0.0
+  description: STD21071
+servers:
+  - url: https://wallet.com
+tags:
+  - name: Transactions
+paths:
+  /transactions:
+    get:
+      tags:
+        - Transactions
+      summary: Get all transactions
+      description: The returned transactions 
+      operationId: getTransactions
+      parameters:
+        - in: query
+          name: transactionsName
+          description: Filter return transactions by given name
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: transactionDate
+          description: Transaction date
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: successfully returns list of all transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionBody'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestException'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotAuthorizedException'
+        500:
+          description: Internal Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerException'
+    put:
+      tags:
+        - Transactions    
+      summary: Update a list of transactions
+      operationId: UpdateTransactions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+      responses:
+        200:
+          description: Transaction updated successfully 
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestException'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotAuthorizedException'
+        500:
+          description: Internal Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerException'
+ 
+components:
+  schemas:
+    Transaction:
+      type: object
+      properties:
+        transactionId:
+          type: integer
+        transactionName:
+          type: string
+          description: transaction name
+        transactionDate:
+          type: string
+          format: date
+          description: transaction date
+    Status:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+    ResponseTemplate:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        body:
+          type: object
+    Successfully:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+      example:
+        status:
+          code: 200
+        message: ok
+        body: { }
+    TransactionBody:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+        - properties:
+            body:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+    BadRequestException:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+      example:
+        status:
+          code: 400
+        message: bad request
+        body: ''
+    NotAuthorizedException:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+      example:
+        status:
+          code: 403
+        message: Not authorized
+        body:
+    InternalServerException:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+      example:
+        status:
+          code: 500
+        message: InternalServerException
+        
