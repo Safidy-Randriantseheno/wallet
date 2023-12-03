@@ -1,0 +1,111 @@
+openapi: 3.0.0
+info:
+  title: Wallet API
+  version: 1.0.0
+  description: API Specification for a wallet application
+
+tags:
+  - name: accounts
+    description: Operations related to accounts
+
+paths:
+  /accounts:
+    get:
+      summary: Get the list of accounts
+      responses:
+        '200':
+          description: Successfully retrieved the list of accounts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountList'
+components:
+  schemas:
+    AccountList:
+      type: array
+      items:
+        type: object
+        properties:
+          accountId:
+            type: integer
+            description: The unique identifier for the account.
+          name:
+            type: string
+            description: The name of the account.
+          devise:
+            type: string
+            description: The currency associated with the account.
+            enum: ['Ariary', 'Euro', 'Dollar', 'Other']
+  openapi: 3.0.0
+  info:
+    title: Wallet API
+    version: 1.0.0
+    description: API Specification for a wallet application
+
+  tags:
+    - name: accounts
+      description: Operations related to accounts
+
+  paths:
+    /accounts:
+      get:
+        summary: Get the list of accounts
+        parameters:
+          - $ref: '#/components/parameters/QueryPagination'
+        responses:
+          '200':
+            description: Successfully retrieved the list of accounts
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AccountList'
+  components:
+    schemas:
+      AccountList:
+        type: array
+        items:
+          type: object
+          properties:
+            accountId:
+              type: integer
+              description: The unique identifier for the account.
+            name:
+              type: string
+              description: The name of the account.
+            devise:
+              type: string
+              description: The currency associated with the account.
+              enum: [ 'Ariary', 'Euro', 'Dollar', 'Other' ]
+    parameters:
+      QueryPagination:
+        name: queryPagination
+        in: query
+        description: Paramètres de pagination.
+        required: false
+        schema:
+          type: object
+          properties:
+            page:
+              type: integer
+              default: 1
+              description: Le numéro de page.
+            page_size:
+              type: integer
+              default: 50
+              description: Le nombre d'éléments par page
+      PathPagination:
+        name: queryPagination
+        in: path
+        description: pagination parametters.
+        required: true
+        schema:
+          type: object
+          properties:
+            page:
+              type: integer
+              default: 1
+              description: page number.
+            page_size:
+              type: integer
+              default: 50
+              description: Page size
