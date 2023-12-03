@@ -107,6 +107,13 @@ components:
       required:
         - name
         - devise
+    Status:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
     ResponseTemplate:
       type: object
       properties:
