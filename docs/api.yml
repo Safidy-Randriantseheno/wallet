@@ -1,0 +1,204 @@
+openapi: 3.0.0
+info:
+  title: Wallet API
+  version: 1.0.0
+  description: API Specification for a wallet application
+
+tags:
+  - name: accounts
+    description: Operations related to accounts
+
+paths:
+  /accounts:
+    get:
+      summary: Get the list of accounts
+      responses:
+        200:
+          description: Successfully retrieved the list of accounts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountListBody'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestException'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotAuthorizedException'
+        500:
+          description: Internal Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerException'
+    put:
+      summary: Update an existing account
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the account
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrUpdateAccount'
+      responses:
+        200:
+          description: Account updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrUpdateListBody'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestException'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotAuthorizedException'
+        500:
+          description: Internal Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerException'
+components:
+  schemas:
+    AccountList:
+      type: array
+      items:
+        type: object
+        properties:
+          accountId:
+            type: integer
+            description: The unique identifier for the account.
+          name:
+            type: string
+            description: The name of the account.
+          devise:
+            type: string
+            description: The currency associated with the account.
+            enum: ['Ariary', 'Euro', 'Dollar', 'Other']
+    CreateOrUpdateAccount:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the account
+        devise:
+          type: string
+          description: Currency of the account
+          enum: [ 'Ariary', 'Euro', 'Dollar', 'Other' ]
+      required:
+        - name
+        - devise
+    Status:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+    ResponseTemplate:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        body:
+          type: object
+    Successfully:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+      example:
+        status:
+          code: 200
+        message: ok
+        body: { }
+    AccountListBody:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+        - properties:
+            body:
+              type: array
+              items:
+                $ref: '#/components/schemas/AccountList'
+    CreateOrUpdateListBody:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+        - properties:
+            body:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateOrUpdateAccount'
+    BadRequestException:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+      example:
+        status:
+          code: 400
+        message: bad request
+        body: ''
+    NotAuthorizedException:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+      example:
+        status:
+          code: 403
+        message: Not authorized
+        body:
+    InternalServerException:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+      example:
+        status:
+          code: 500
+        message: InternalServerException
+        body:
+  parameters:
+    QueryPagination:
+      name: queryPagination
+      in: query
+      description: Paramètres de pagination.
+      required: false
+      schema:
+        type: object
+        properties:
+          page:
+            type: integer
+            default: 1
+            description: Le numéro de page.
+          page_size:
+            type: integer
+            default: 50
+            description: Le nombre d'éléments par page
+    PathPagination:
+      name: queryPagination
+      in: path
+      description: pagination parametters.
+      required: true
+      schema:
+        type: object
+        properties:
+          page:
+            type: integer
+            default: 1
+            description: page number.
+          page_size:
+            type: integer
+            default: 50
+            description: Page size
