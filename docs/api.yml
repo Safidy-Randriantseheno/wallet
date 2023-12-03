@@ -1,3 +1,4 @@
+
 openapi: 3.0.0
 info:
   title: Wallet API
@@ -5,13 +6,14 @@ info:
   description: API Specification for a wallet application
 
 tags:
-  - name: accounts
-    description: Operations related to accounts
-
+  - name: Account
+  - name: Transactions
 paths:
   /accounts:
     get:
       summary: Get the list of accounts
+      tags:
+        - Account
       responses:
         200:
           description: Successfully retrieved the list of accounts
@@ -19,6 +21,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccountListBody'
+
         400:
           description: Bad request
           content:
@@ -39,6 +42,8 @@ paths:
                 $ref: '#/components/schemas/InternalServerException'
     put:
       summary: Update an existing account
+      tags:
+        - Account
       parameters:
         - name: id
           in: path
@@ -77,6 +82,85 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerException'
+  /transactions:
+    get:
+      tags:
+        - Transactions
+      summary: Get all transactions
+      description: The returned transactions 
+      operationId: getTransactions
+      parameters:
+        - in: query
+          name: transactionsName
+          description: Filter return transactions by given name
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: transactionDate
+          description: Transaction date
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: successfully returns list of all transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionBody'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestException'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotAuthorizedException'
+        500:
+          description: Internal Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerException'
+    put:
+      tags:
+        - Transactions    
+      summary: Update a list of transactions
+      operationId: UpdateTransactions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+      responses:
+        200:
+          description: Transaction updated successfully 
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestException'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotAuthorizedException'
+        500:
+          description: Internal Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerException'
 components:
   schemas:
     AccountList:
@@ -94,6 +178,18 @@ components:
             type: string
             description: The currency associated with the account.
             enum: ['Ariary', 'Euro', 'Dollar', 'Other']
+    Transaction:
+      type: object
+      properties:
+        transactionId:
+          type: integer
+        transactionName:
+          type: string
+          description: transaction name
+        transactionDate:
+          type: string
+          format: date
+          description: transaction date
     CreateOrUpdateAccount:
       type: object
       properties:
@@ -129,6 +225,10 @@ components:
           code: 200
         message: ok
         body: { }
+    TransactionBody:
+      allOf:
+        - $ref: '#/components/schemas/Transaction'
+
     AccountListBody:
       allOf:
         - $ref: '#/components/schemas/ResponseTemplate'
@@ -138,13 +238,18 @@ components:
               items:
                 $ref: '#/components/schemas/AccountList'
     CreateOrUpdateListBody:
+
       allOf:
         - $ref: '#/components/schemas/ResponseTemplate'
         - properties:
             body:
               type: array
               items:
+
+        
+
                 $ref: '#/components/schemas/CreateOrUpdateAccount'
+
     BadRequestException:
       allOf:
         - $ref: '#/components/schemas/ResponseTemplate'
@@ -202,3 +307,4 @@ components:
             type: integer
             default: 50
             description: Page size
+
