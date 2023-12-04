@@ -1,6 +1,9 @@
 package com.td2.wallet.model;
 
+import jakarta.persistence.*;
 import lombok.*;
+
+import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
 @Table(name = "\"author\"")
