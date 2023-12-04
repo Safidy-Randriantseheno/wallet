@@ -6,6 +6,7 @@ import com.td2.wallet.model.Devise;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -40,13 +41,44 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
     @Override
     public List<Account> saveAll(List<Account> toSave) {
-        return null;
+        String query = "INSERT INTO accounts (id, name, devise_id) VALUES (?, ?, ?)";
+
+        jdbcTemplate.batchUpdate(query, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
+                Account account = toSave.get(i);
+                preparedStatement.setString(1, account.getId());
+                preparedStatement.setString(2, account.getName());
+                preparedStatement.setString(3, account.getDevise().getId());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return toSave.size();
+            }
+        });
+
+        return toSave;
     }
 
     @Override
     public Account save(Account toSave) {
-        return null;
+        String query = "INSERT INTO accounts (id, name, devise_id) VALUES (?, ?, ?)";
+
+        int rowsAffected = jdbcTemplate.update(query,
+                toSave.getId(),
+                toSave.getName(),
+                toSave.getDevise().getId()
+        );
+
+        if (rowsAffected > 0) {
+            return toSave;
+        } else {
+
+            return null;
+        }
     }
+
 
     public Devise findDeviseById(String deviseId) {
         String query = "SELECT * FROM devise WHERE id = ?";
