@@ -70,8 +70,24 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
 
     @Override
     public Transaction save(Transaction toSave) {
-        return null;
+        String query = "INSERT INTO transaction(id, account_id, transaction_name, amount, transactionDate ) VALUES (?, ?, ?, ?, ?)";
+
+        int rowsAffected = jdbcTemplate.update(query,
+                toSave.getId(),
+                toSave.getAccount_id().getId(),
+                toSave.getTransactionName(),
+                toSave.getAmount(),
+                toSave.getTransactionDate()
+        );
+
+        if (rowsAffected > 0) {
+            return toSave;
+        } else {
+
+            return null;
+        }
     }
+
     public Account findAccountById(String accountId) {
         String query = "SELECT * FROM account WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
