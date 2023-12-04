@@ -17,8 +17,8 @@ public class TransactionService {
     public List<Transaction> getAll(){
         return transactionCrudOperations.findAll();
     }
-    public List<Transaction> saveAllTransaction(List<Transaction> dataList) {
-        return transactionCrudOperations.saveAll(dataList);
+    public List<Transaction> saveAll(List<Transaction> transaction) {
+        return transactionCrudOperations.saveAll(transaction);
     }
 
     public Transaction saveTransaction(Transaction transaction) {
