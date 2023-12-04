@@ -4,9 +4,7 @@ import com.td2.wallet.model.Account;
 import com.td2.wallet.service.AccountService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -14,9 +12,19 @@ import java.util.List;
 @RequestMapping("/accounts")
 @AllArgsConstructor
 public class AccountController {
-private final AccountService accountService;
-@GetMapping("/list")
-public List<Account> getAllAccount(){
-    return accountService.getAll();
-}
+    private final AccountService accountService;
+    @GetMapping("/list")
+    public List<Account> getAllAccount(){
+        return accountService.getAll();
+    }
+    @PostMapping("/saveAll")
+    public  List<Account> saveAllAccount(@RequestBody List<Account> accounts){
+        return accountService.saveAll(accounts);
+
+    }
+    @PostMapping("/save")
+    public  Account saveAccount(@RequestBody Account account){
+        return accountService.save(account);
+
+    }
 }

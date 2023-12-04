@@ -6,7 +6,7 @@ import lombok.*;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
-@Table(name = "\"author\"")
+@Table(name = "\"accounts\"")
 @Getter
 @Setter
 @ToString
@@ -18,6 +18,7 @@ public class Account {
     @GeneratedValue(strategy = IDENTITY)
     private String id;
     private String name;
-    @OneToOne
-    private Devise devise;
+    @ManyToOne
+    @JoinColumn(name = "devise_id")
+    private Devise deviseId;
 }

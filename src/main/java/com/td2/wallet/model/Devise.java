@@ -3,10 +3,12 @@ package com.td2.wallet.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
-@Table(name = "\"author\"")
+@Table(name = "\"devise\"")
 @Getter
 @Setter
 @ToString
@@ -18,6 +20,8 @@ public class Devise {
     @GeneratedValue(strategy = IDENTITY)
     private String id;
     private String name;
-    @OneToOne
     private String symbol;
+    private String code;
+    @OneToMany(mappedBy = "deviseId")
+    private List<Account> accounts;
 }

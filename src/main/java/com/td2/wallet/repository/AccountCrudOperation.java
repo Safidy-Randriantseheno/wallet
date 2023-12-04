@@ -49,7 +49,13 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                 Account account = toSave.get(i);
                 preparedStatement.setString(1, account.getId());
                 preparedStatement.setString(2, account.getName());
-                preparedStatement.setString(3, account.getDevise().getId());
+                if (account.getDeviseId().getId() != null) {
+                    preparedStatement.setString(3, account.getDeviseId().getId());
+                } else {
+                    // Handle the case where Devise ID is null (throw an exception or set a default value)
+                    // For now, let's assume a default value "UNKNOWN"
+                    preparedStatement.setString(3, "UNKNOWN");
+                }
             }
 
             @Override
@@ -68,7 +74,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         int rowsAffected = jdbcTemplate.update(query,
                 toSave.getId(),
                 toSave.getName(),
-                toSave.getDevise().getId()
+                toSave.getDeviseId().getId()
         );
 
         if (rowsAffected > 0) {
