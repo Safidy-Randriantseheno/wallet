@@ -16,5 +16,15 @@ public class TransactionController {
     public List<Transaction> getAllTransaction(){
         return transactionService.getAll();
     }
+    @PostMapping("/saveAll")
+    public  List<Transaction> saveAllAccount(@RequestBody List<Transaction> transaction){
+        return transactionService.saveAll(transaction);
+
+    }
+    @PostMapping("/save")
+    public  Transaction saveTransaction(@RequestBody Transaction transaction){
+        return transactionService.saveTransaction(transaction);
+
+    }
 }
 
