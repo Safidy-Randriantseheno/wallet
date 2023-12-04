@@ -6,6 +6,7 @@ import com.td2.wallet.model.Transaction;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -43,9 +44,29 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     }
 
     @Override
-    public List<Transaction> saveAll(List<Transaction> toSave) {
-        return null;
+    public List<Transaction> saveAll(List<Transaction> toSave) {  String query = "INSERT INTO transaction(id, account_id, transaction_name, amount, transactionDate ) VALUES (?, ?, ?, ?, ?)";
+
+        jdbcTemplate.batchUpdate(query, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
+                Transaction transaction = toSave.get(i);
+                preparedStatement.setString(1, transaction.getId());
+                preparedStatement.setString(2, transaction.getAccount_id().getId());
+                preparedStatement.setString(3, transaction.getTransactionName());
+                preparedStatement.setInt(3, transaction.getAmount());
+                preparedStatement.setDate(3, (java.sql.Date) transaction.getTransactionDate());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return toSave.size();
+            }
+        });
+
+        return toSave;
     }
+
+
 
     @Override
     public Transaction save(Transaction toSave) {
