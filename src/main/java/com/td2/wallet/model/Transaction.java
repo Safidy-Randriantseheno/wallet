@@ -18,7 +18,7 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private String id;
     @ManyToOne
-    @JoinColumn(name = "account_id_id")
+    @JoinColumn(name = "account_id")
     private Account account_id;
     private String transactionName;
     private Integer amount;
