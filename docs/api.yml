@@ -11,6 +11,8 @@ tags:
 paths:
   /accounts:
     get:
+      tags:
+        - accounts
       summary: Get the list of accounts
       responses:
         200:
@@ -37,9 +39,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerException'
+    post:
+      summary: create account.
+      tags:
+        - accounts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
+      responses:
+        200:
+          description: Account updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrUpdateListBody'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestException'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotAuthorizedException'
+        500:
+          description: Internal Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerException'
   /accounts/{id}:
     get:
-      summary: Get account by accounts id.
+      tags:
+        - accounts
+      summary: Get account by account id.
+      description: Get the account id.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
       responses:
         200:
           description: Successfully retrieved the  account by id.
@@ -67,6 +113,8 @@ paths:
                 $ref: '#/components/schemas/InternalServerException'
     put:
       summary: Update an existing account
+      tags:
+        - accounts
       parameters:
         - name: id
           in: path
@@ -200,7 +248,7 @@ components:
           type: string
           format: date
           description: transaction date
-    currency:
+    Currency:
       type: object
       properties:
         id:
@@ -212,6 +260,16 @@ components:
           enum:
             - 'Euro'
             - 'MGA'
+    Balance:
+      type: object
+      properties:
+        id:
+          type: string
+        value:
+          type: integer
+        date:
+          type: string
+          format: date
     Account:
       type: object
       properties:
@@ -226,9 +284,11 @@ components:
             - 'bet'
             - 'mobile'
         currency:
-          type: object
-        blance:
-          type: object
+          allOf:
+            - $ref: '#/components/schemas/Currency'
+        ballance:
+          allOf:
+            - $ref: '#/components/schemas/Balance'
     AccountList:
       type: array
       items:
