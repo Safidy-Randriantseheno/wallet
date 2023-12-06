@@ -45,8 +45,8 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     }
 
     @Override
-    public List<Transaction> saveAll(List<Transaction> toSave) {  String query = "INSERT INTO transaction(id, account_id, transaction_name, amount, transactionDate ) VALUES (?, ?, ?, ?, ?)";
-
+    public List<Transaction> saveAll(List<Transaction> toSave) {
+        String query = "INSERT INTO transaction(id, account_id, transaction_name, amount, transaction_date ) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET account_id = excluded.account_id ,transaction_name = excluded.transaction_name, amount = excluded.amount, transaction_date = excluded.transaction_date";
         jdbcTemplate.batchUpdate(query, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
@@ -71,8 +71,7 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
 
     @Override
     public Transaction save(Transaction toSave) {
-        String query = "INSERT INTO transaction(id, account_id, transaction_name, amount, transactionDate ) VALUES (?, ?, ?, ?, ?)";
-
+        String query = "INSERT INTO transaction(id, account_id, transaction_name, amount, transaction_date ) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET account_id = excluded.account_id ,transaction_name = excluded.transaction_name, amount = excluded.amount, transaction_date = excluded.transaction_date";
         int rowsAffected = jdbcTemplate.update(query,
                 toSave.getId(),
                 toSave.getAccount_id().getId(),

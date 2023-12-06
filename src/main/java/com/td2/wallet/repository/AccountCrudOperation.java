@@ -41,8 +41,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
     @Override
     public List<Account> saveAll(List<Account> toSave) {
-        String query = "INSERT INTO accounts (id, name, devise_id) VALUES (?, ?, ?)";
-
+        String query = "INSERT INTO accounts (id, name, devise_id) VALUES (?, ?, ?) ON CONFLICT (id) DO UPDATE SET name = excluded.name, devise_id = excluded.devise_id";
         jdbcTemplate.batchUpdate(query, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
@@ -52,8 +51,6 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                 if (account.getDeviseId().getId() != null) {
                     preparedStatement.setString(3, account.getDeviseId().getId());
                 } else {
-                    // Handle the case where Devise ID is null (throw an exception or set a default value)
-                    // For now, let's assume a default value "UNKNOWN"
                     preparedStatement.setString(3, "UNKNOWN");
                 }
             }
@@ -69,8 +66,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
     @Override
     public Account save(Account toSave) {
-        String query = "INSERT INTO accounts (id, name, devise_id) VALUES (?, ?, ?)";
-
+        String query = "INSERT INTO accounts (id, name, devise_id) VALUES (?, ?, ?) ON CONFLICT (id) DO UPDATE SET name = excluded.name, devise_id = excluded.devise_id";
         int rowsAffected = jdbcTemplate.update(query,
                 toSave.getId(),
                 toSave.getName(),
