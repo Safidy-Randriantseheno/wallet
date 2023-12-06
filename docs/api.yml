@@ -3,6 +3,8 @@ info:
   title: Wallet API
   version: 1.2.0
   description: API Specification for a wallet application
+servers:
+  - url: 'https://api-dev.wallet'
 
 tags:
   - name: accounts
@@ -74,25 +76,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerException'
-  /account/{id}:
-    get:
+    put:
+      summary: Update an existing account
       tags:
         - accounts
-      summary: Get account by account id.
-      description: Get the account id.
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrUpdateAccount'
       responses:
         200:
-          description: Successfully retrieved the  account by id.
+          description: Account updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Account'
+                $ref: '#/components/schemas/CreateOrUpdateListAccountBody'
         400:
           description: Bad request
           content:
@@ -111,30 +111,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerException'
-    put:
-      summary: Update an existing account
+  /account/{id}:
+    get:
       tags:
         - accounts
+      summary: Get account by identifier
       parameters:
         - name: id
           in: path
           required: true
-          description: ID of the account
           schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateOrUpdateAccount'
+            type: string
+      operationId: getAccountById
       responses:
         200:
-          description: Account updated successfully
+          description: Successfully retrieved the  account by id.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateOrUpdateListAccountBody'
+                $ref: '#/components/schemas/Account'
         400:
           description: Bad request
           content:
@@ -220,26 +215,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerException'
-  /transaction/{id}:
-    get:
+    put:
+      summary: Update a list of transactions
       tags:
         - Transactions
-      summary: Get transaction by id.
-      description: The returned transaction by id.
-      operationId: getTransactionById
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrUpdateTransaction'
       responses:
         200:
           description: successfully return transaction by id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionBody'
+                $ref: '#/components/schemas/CreateOrUpdateListTransactionBody'
         400:
           description: Bad request
           content:
@@ -258,23 +249,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerException'
-    put:
+  /transaction/{id}:
+    get:
       tags:
         - Transactions
-      summary: Update a list of transactions
-      operationId: UpdateTransactions
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateOrUpdateTransaction'
+      summary: Get transaction by identifier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      operationId: getTransactionById
       responses:
         200:
           description: successfully return transaction by id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateOrUpdateListTransactionBody'
+                $ref: '#/components/schemas/TransactionBody'
         400:
           description: Bad request
           content:
