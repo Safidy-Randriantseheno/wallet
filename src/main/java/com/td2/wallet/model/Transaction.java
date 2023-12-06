@@ -16,13 +16,16 @@ import java.util.Date;
 @NoArgsConstructor
 public class Transaction {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
     @ManyToOne
     @JoinColumn(name = "account_id")
-    private Account account_id;
+    private Account accountId;
+    @Column(name = "amount")
+    private int amount;
+    @Column(name = "transaction_name")
     private String transactionName;
-    private Integer amount;
+    @Column(name = "transaction_date")
     private Date transactionDate;
 }
 

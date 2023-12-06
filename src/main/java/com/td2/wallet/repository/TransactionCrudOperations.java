@@ -36,7 +36,7 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
                 Date transactionDate = resultSet.getDate("transaction_date") ;
                 String accountId = resultSet.getString("account_id");;
                 Account account = findAccountById(accountId);
-                transaction.add(new Transaction(id,account,transactionName,amount,transactionDate));
+                transaction.add(new Transaction(id,account,amount,transactionName,transactionDate));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -52,12 +52,11 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
             public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
                 Transaction transaction = toSave.get(i);
                 preparedStatement.setString(1, transaction.getId());
-                preparedStatement.setString(2, transaction.getAccount_id().getId());
-                preparedStatement.setString(3, transaction.getTransactionName());
+                preparedStatement.setString(2, transaction.getAccountId().getId());
                 preparedStatement.setInt(3, transaction.getAmount());
-                preparedStatement.setDate(3, (java.sql.Date) transaction.getTransactionDate());
+                preparedStatement.setString(4, transaction.getTransactionName());
+                preparedStatement.setDate(5, (java.sql.Date) transaction.getTransactionDate());
             }
-
             @Override
             public int getBatchSize() {
                 return toSave.size();
@@ -66,24 +65,20 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
 
         return toSave;
     }
-
-
-
     @Override
     public Transaction save(Transaction toSave) {
         String query = "INSERT INTO transaction(id, account_id, transaction_name, amount, transaction_date ) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET account_id = excluded.account_id ,transaction_name = excluded.transaction_name, amount = excluded.amount, transaction_date = excluded.transaction_date";
         int rowsAffected = jdbcTemplate.update(query,
                 toSave.getId(),
-                toSave.getAccount_id().getId(),
-                toSave.getTransactionName(),
+                toSave.getAccountId().getId(),
                 toSave.getAmount(),
+                toSave.getTransactionName(),
                 toSave.getTransactionDate()
         );
 
         if (rowsAffected > 0) {
             return toSave;
         } else {
-
             return null;
         }
     }
