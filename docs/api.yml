@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Wallet API
-  version: 1.0.0
+  version: 1.2.0
   description: API Specification for a wallet application
 
 tags:
@@ -48,14 +48,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Account'
+              $ref: '#/components/schemas/CreateOrUpdateAccount'
       responses:
         200:
           description: Account updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateOrUpdateListBody'
+                $ref: '#/components/schemas/CreateOrUpdateListAccountBody'
         400:
           description: Bad request
           content:
@@ -74,7 +74,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerException'
-  /accounts/{id}:
+  /account/{id}:
     get:
       tags:
         - accounts
@@ -134,7 +134,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateOrUpdateListBody'
+                $ref: '#/components/schemas/CreateOrUpdateListAccountBody'
         400:
           description: Bad request
           content:
@@ -160,23 +160,47 @@ paths:
       summary: Get all transactions
       description: The returned transactions
       operationId: getTransactions
-      parameters:
-        - in: query
-          name: transactionsName
-          description: Filter return transactions by given name
-          required: false
-          schema:
-            type: string
-        - in: query
-          name: transactionDate
-          description: Transaction date
-          required: true
-          schema:
-            type: string
-            format: date
       responses:
         200:
           description: successfully returns list of all transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionBody'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestException'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotAuthorizedException'
+        500:
+          description: Internal Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerException'
+  /transaction/{id}:
+    get:
+      tags:
+        - Transactions
+      summary: Get transaction by id.
+      description: The returned transaction by id.
+      operationId: getTransactionById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successfully return transaction by id
           content:
             application/json:
               schema:
@@ -208,12 +232,14 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/Transaction'
+              $ref: '#/components/schemas/CreateOrUpdateTransaction'
       responses:
         200:
-          description: Transaction updated successfully
+          description: successfully return transaction by id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrUpdateListTransactionBody'
         400:
           description: Bad request
           content:
@@ -237,17 +263,21 @@ components:
     Transaction:
       type: object
       properties:
-        transactionId:
+        id:
           type: string
-        transactionName:
+        label:
           type: string
-          description: transaction name
         amount:
-          type: integer
+          type: number
+          format: double
         transactionDate:
           type: string
           format: date
-          description: transaction date
+        type:
+          type: string
+          enum:
+            - 'debit'
+            - 'credit'
     Currency:
       type: object
       properties:
@@ -266,7 +296,8 @@ components:
         id:
           type: string
         value:
-          type: integer
+          type: number
+          format: double
         date:
           type: string
           format: date
@@ -292,31 +323,41 @@ components:
     AccountList:
       type: array
       items:
-        type: object
-        properties:
-          accountId:
-            type: string
-            description: The unique identifier for the account.
-          name:
-            type: string
-            description: The name of the account.
-          devise:
-            type: string
-            description: The currency associated with the account.
-            enum: ['Ariary', 'Euro', 'Dollar', 'Other']
+        $ref: '#/components/schemas/Account'
+
     CreateOrUpdateAccount:
       type: object
       properties:
         name:
           type: string
-          description: Name of the account
-        devise:
+        type:
           type: string
-          description: Currency of the account
-          enum: [ 'Ariary', 'Euro', 'Dollar', 'Other' ]
-      required:
-        - name
-        - devise
+          enum:
+            - 'banque'
+            - 'bet'
+            - 'mobile'
+        currency:
+          allOf:
+            - $ref: '#/components/schemas/Currency'
+        ballance:
+          allOf:
+            - $ref: '#/components/schemas/Balance'
+    CreateOrUpdateTransaction:
+      type: object
+      properties:
+        label:
+          type: string
+        amount:
+          type: number
+          format: double
+        transactionDate:
+          type: string
+          format: date
+        type:
+          type: string
+          enum:
+            - 'debit'
+            - 'credit'
     Status:
       type: object
       properties:
@@ -347,15 +388,23 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/AccountList'
-    CreateOrUpdateListBody:
+    CreateOrUpdateListAccountBody:
       allOf:
         - $ref: '#/components/schemas/ResponseTemplate'
         - properties:
             body:
               type: array
               items:
-                $ref: '#/components/schemas/CreateOrUpdateAccount'
+                $ref: '#/components/schemas/Account'
     TransactionBody:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+        - properties:
+            body:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+    CreateOrUpdateListTransactionBody:
       allOf:
         - $ref: '#/components/schemas/ResponseTemplate'
         - properties:
