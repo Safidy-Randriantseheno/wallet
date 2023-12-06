@@ -185,6 +185,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerException'
+    post:
+      tags:
+        - Transactions
+      summary: create transaction
+      operationId: createTransaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrUpdateTransaction'
+      responses:
+        200:
+          description: successfully return transaction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrUpdateListTransactionBody'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestException'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotAuthorizedException'
+        500:
+          description: Internal Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerException'
   /transaction/{id}:
     get:
       tags:
