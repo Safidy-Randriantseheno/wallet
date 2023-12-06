@@ -27,8 +27,6 @@ public class Transaction {
     private Type type;
     @Column(name = "amount")
     private BigDecimal amount;
-    @Column(name = "transaction_name")
-    private String transactionName;
     @Column(name = "transaction_date")
     private Date transactionDate;
     public enum Label {
