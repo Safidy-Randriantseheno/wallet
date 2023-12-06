@@ -37,6 +37,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerException'
+  /accounts/{id}:
+    get:
+      summary: Get account by accounts id.
+      responses:
+        200:
+          description: Successfully retrieved the  account by id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestException'
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotAuthorizedException'
+        500:
+          description: Internal Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerException'
     put:
       summary: Update an existing account
       parameters:
@@ -156,14 +184,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InternalServerException'
-
 components:
   schemas:
     Transaction:
       type: object
       properties:
         transactionId:
-          type: integer
+          type: string
         transactionName:
           type: string
           description: transaction name
@@ -173,13 +200,42 @@ components:
           type: string
           format: date
           description: transaction date
+    currency:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        code:
+          type: string
+          enum:
+            - 'Euro'
+            - 'MGA'
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - 'banque'
+            - 'bet'
+            - 'mobile'
+        currency:
+          type: object
+        blance:
+          type: object
     AccountList:
       type: array
       items:
         type: object
         properties:
           accountId:
-            type: integer
+            type: string
             description: The unique identifier for the account.
           name:
             type: string
