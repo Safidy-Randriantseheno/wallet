@@ -2,7 +2,6 @@
 package com.td2.wallet.repository;
 
 import com.td2.wallet.model.Account;
-import com.td2.wallet.model.Devise;
 import com.td2.wallet.model.Transaction;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import lombok.AllArgsConstructor;

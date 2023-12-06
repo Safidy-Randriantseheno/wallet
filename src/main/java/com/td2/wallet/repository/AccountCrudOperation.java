@@ -2,7 +2,7 @@ package com.td2.wallet.repository;
 
 
 import com.td2.wallet.model.Account;
-import com.td2.wallet.model.Devise;
+import com.td2.wallet.model.Currency;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                 String id = resultSet.getString("id");
                 String name = resultSet.getString("name");
                 String deviseId = resultSet.getString("devise_id");
-                Devise devise = findDeviseById(deviseId);
+                Currency devise = findDeviseById(deviseId);
                 accounts.add(new Account(id,name,devise));
             }
         } catch (SQLException e) {
@@ -82,7 +82,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
     }
 
 
-    public Devise findDeviseById(String deviseId) {
+    public Currency findDeviseById(String deviseId) {
         String query = "SELECT * FROM devise WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
@@ -97,8 +97,8 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         }
         return null;
     }
-    private Devise mapResultSetToDevise(ResultSet resultSet) throws SQLException {
-        Devise devise = new Devise();
+    private Currency mapResultSetToDevise(ResultSet resultSet) throws SQLException {
+        Currency devise = new Currency();
         devise.setId(resultSet.getString("id"));
         devise.setName(resultSet.getString("name"));
         devise.setSymbol(resultSet.getString("symbol"));
