@@ -19,6 +19,17 @@ public class Account {
     private String id;
     private String name;
     @ManyToOne
-    @JoinColumn(name = "devise_id")
-    private Devise deviseId;
+    @JoinColumn(name = "currency_id")
+    private Currency currencyId;
+    @Enumerated(EnumType.STRING)
+    private Type type;
+    @ManyToOne
+    @JoinColumn(name = "transaction_list_id")
+    private Transaction transactionList;
+    @ManyToOne
+    private Balance balanceId;
+    public enum Type {
+        bank, cash, mobileMoney
+    }
+
 }

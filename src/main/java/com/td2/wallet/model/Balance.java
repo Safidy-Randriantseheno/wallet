@@ -3,25 +3,23 @@ package com.td2.wallet.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
-
 @Entity
-@Table(name = "\"devise\"")
+@Table(name = "\"balance\"")
 @Getter
 @Setter
 @ToString
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Devise {
+public class Balance {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     private String id;
     private String name;
-    private String symbol;
-    private String code;
-    @OneToMany(mappedBy = "deviseId")
-    private List<Account> accounts;
+    private BigDecimal balance_value;
+    private LocalDate balance_date;
 }

@@ -2,7 +2,6 @@
 package com.td2.wallet.repository;
 
 import com.td2.wallet.model.Account;
-import com.td2.wallet.model.Devise;
 import com.td2.wallet.model.Transaction;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import lombok.AllArgsConstructor;
@@ -11,6 +10,7 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,12 +31,13 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
              ResultSet resultSet = statement.executeQuery(query)) {
             while (resultSet.next()) {
                 String id = resultSet.getString("id");
-                String transactionName = resultSet.getString("transaction_name");
-                Integer amount = resultSet.getInt("amount");
+                BigDecimal amount = resultSet.getBigDecimal("amount");
                 Date transactionDate = resultSet.getDate("transaction_date") ;
+                Transaction.Label label = Transaction.Label.valueOf(resultSet.getString("label"));
+                Transaction.Type type = Transaction.Type.valueOf(resultSet.getString("type"));
                 String accountId = resultSet.getString("account_id");;
                 Account account = findAccountById(accountId);
-                transaction.add(new Transaction(id,account,amount,transactionName,transactionDate));
+                transaction.add(new Transaction(id,account,label,type,amount,transactionDate));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -45,19 +46,19 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     }
 
     @Override
-    public List<Transaction> saveAll(List<Transaction> toSave) {  String query = "INSERT INTO transaction(id, account_id, transaction_name, amount, transaction_date ) VALUES (?, ?, ?, ?, ?)";
-
+    public List<Transaction> saveAll(List<Transaction> toSave) {
+        String query = "INSERT INTO transaction(id, account_id, label, type, amount, transaction_date ) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET account_id = excluded.account_id ,label = excluded.label,type = excluded.type,  amount = excluded.amount, transaction_date = excluded.transaction_date";
         jdbcTemplate.batchUpdate(query, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
                 Transaction transaction = toSave.get(i);
                 preparedStatement.setString(1, transaction.getId());
                 preparedStatement.setString(2, transaction.getAccountId().getId());
-                preparedStatement.setInt(3, transaction.getAmount());
-                preparedStatement.setString(4, transaction.getTransactionName());
-                preparedStatement.setDate(5, (java.sql.Date) transaction.getTransactionDate());
+                preparedStatement.setString(3, String.valueOf(transaction.getLabel()));
+                preparedStatement.setString(4, String.valueOf(transaction.getType()));
+                preparedStatement.setBigDecimal(6, transaction.getAmount());
+                preparedStatement.setDate(7, (java.sql.Date) transaction.getTransactionDate());
             }
-
             @Override
             public int getBatchSize() {
                 return toSave.size();
@@ -68,13 +69,13 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     }
     @Override
     public Transaction save(Transaction toSave) {
-        String query = "INSERT INTO transaction(id, account_id, amount, transaction_name, transaction_date) VALUES (?, ?, ?, ?, ?)";
-
+        String query = "INSERT INTO transaction(id, account_id, label, type, amount, transaction_date ) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET account_id = excluded.account_id ,label = excluded.label,type = excluded.type,  amount = excluded.amount, transaction_date = excluded.transaction_date";
         int rowsAffected = jdbcTemplate.update(query,
                 toSave.getId(),
                 toSave.getAccountId().getId(),
+                toSave.getLabel(),
+                toSave.getType(),
                 toSave.getAmount(),
-                toSave.getTransactionName(),
                 toSave.getTransactionDate()
         );
 

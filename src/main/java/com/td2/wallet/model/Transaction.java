@@ -4,6 +4,7 @@ package com.td2.wallet.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Table(name = "transaction")
@@ -21,12 +22,19 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "account_id")
     private Account accountId;
+    @Enumerated(EnumType.STRING)
+    private Label label;
+    private Type type;
     @Column(name = "amount")
-    private int amount;
-    @Column(name = "transaction_name")
-    private String transactionName;
+    private BigDecimal amount;
     @Column(name = "transaction_date")
     private Date transactionDate;
+    public enum Label {
+        loan, purchase, repayment
+    }
+    public enum Type {
+        debit, credit
+    }
 }
 
 

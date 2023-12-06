@@ -2,7 +2,9 @@ package com.td2.wallet.repository;
 
 
 import com.td2.wallet.model.Account;
-import com.td2.wallet.model.Devise;
+import com.td2.wallet.model.Balance;
+import com.td2.wallet.model.Currency;
+import com.td2.wallet.model.Transaction;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +31,15 @@ public class AccountCrudOperation implements CrudOperations<Account> {
             while (resultSet.next()) {
                 String id = resultSet.getString("id");
                 String name = resultSet.getString("name");
-                String deviseId = resultSet.getString("devise_id");
-                Devise devise = findDeviseById(deviseId);
-                accounts.add(new Account(id,name,devise));
+                String currencyId = resultSet.getString("devise_id");
+                String transactionId = resultSet.getString("transactionId");
+                String balanceId = resultSet.getString("balanceId");
+                Transaction transaction = findTransactionByID(transactionId);
+                Currency currency = findCurrencyById(currencyId);
+                Account.Type type = Account.Type.valueOf(resultSet.getString("type"));
+                Balance balance = findBalanceById(balanceId);
+                 accounts.add(new Account(id, name, currency, type, transaction, balance));
+
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -41,20 +49,17 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
     @Override
     public List<Account> saveAll(List<Account> toSave) {
-        String query = "INSERT INTO accounts (id, name, devise_id) VALUES (?, ?, ?)";
-
+        String query = "INSERT INTO accounts (id, name, devise_id) VALUES (?, ?, ?) ON CONFLICT (id) DO UPDATE SET name = excluded.name, devise_id = excluded.devise_id";
         jdbcTemplate.batchUpdate(query, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
                 Account account = toSave.get(i);
                 preparedStatement.setString(1, account.getId());
                 preparedStatement.setString(2, account.getName());
-                if (account.getDeviseId().getId() != null) {
-                    preparedStatement.setString(3, account.getDeviseId().getId());
+                if (account.getCurrencyId().getId() != null) {
+                    preparedStatement.setString(3, account.getCurrencyId().getId());
                 } else {
-                    // Handle the case where Devise ID is null (throw an exception or set a default value)
-                    // For now, let's assume a default value "UNKNOWN"
-                    preparedStatement.setString(3, "UNKNOWN");
+                    preparedStatement.setString(4, "UNKNOWN");
                 }
             }
 
@@ -69,12 +74,11 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
     @Override
     public Account save(Account toSave) {
-        String query = "INSERT INTO accounts (id, name, devise_id) VALUES (?, ?, ?)";
-
+        String query = "INSERT INTO accounts (id, name, devise_id) VALUES (?, ?, ?) ON CONFLICT (id) DO UPDATE SET name = excluded.name, devise_id = excluded.devise_id";
         int rowsAffected = jdbcTemplate.update(query,
                 toSave.getId(),
                 toSave.getName(),
-                toSave.getDeviseId().getId()
+                toSave.getCurrencyId().getId()
         );
 
         if (rowsAffected > 0) {
@@ -86,14 +90,14 @@ public class AccountCrudOperation implements CrudOperations<Account> {
     }
 
 
-    public Devise findDeviseById(String deviseId) {
+    public Currency findCurrencyById(String currencyId) {
         String query = "SELECT * FROM devise WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setString(1, deviseId);
+            statement.setString(1, currencyId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    return mapResultSetToDevise(resultSet);
+                    return mapResultSetToCurrency(resultSet);
                 }
             }
         } catch (SQLException e) {
@@ -101,11 +105,51 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         }
         return null;
     }
-    private Devise mapResultSetToDevise(ResultSet resultSet) throws SQLException {
-        Devise devise = new Devise();
-        devise.setId(resultSet.getString("id"));
-        devise.setName(resultSet.getString("name"));
-        devise.setSymbol(resultSet.getString("symbol"));
-        return devise;
+    public Transaction findTransactionByID(String transactionId) {
+        String query = "SELECT * FROM devise WHERE id = ?";
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, transactionId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToTransaction(resultSet);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
+    public Balance findBalanceById(String balanceId) {
+        String query = "SELECT * FROM devise WHERE id = ?";
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, balanceId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToBalance(resultSet);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    private Balance mapResultSetToBalance(ResultSet resultSet) throws SQLException {
+        Balance balance = new Balance();
+        balance.setId(resultSet.getString("id"));
+        return balance;
+    }
+    private Currency mapResultSetToCurrency(ResultSet resultSet) throws SQLException {
+        Currency currency = new Currency();
+        currency.setId(resultSet.getString("id"));
+        currency.setName(Currency.Name.valueOf(resultSet.getString("name")));
+        return currency;
+    }
+    private Transaction mapResultSetToTransaction(ResultSet resultSet) throws SQLException {
+        Transaction transaction = new Transaction();
+        transaction.setId(resultSet.getString("id"));
+        return transaction;
+    }
+
 }
