@@ -1,6 +1,5 @@
 CREATE TABLE IF NOT EXISTS "balance" (
     id                  varchar            constraint balance_pk primary key default uuid_generate_v4(),
-
     balance_value       DECIMAL(10, 2)             NOT NULL,
     balance_date        TIMESTAMP          DEFAULT CURRENT_TIMESTAMP
 );
