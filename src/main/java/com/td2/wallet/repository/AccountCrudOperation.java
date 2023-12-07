@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,27 @@ public class AccountCrudOperation implements CrudOperations<Account> {
             e.printStackTrace();
         }
         return accounts;
+    }
+    public Account findAccountById(String accountId) {
+        String query = "SELECT * FROM account WHERE id = ?";
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, accountId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToAccount(resultSet);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    private Account mapResultSetToAccount(ResultSet resultSet) throws SQLException {
+        Account account = new Account();
+        account.setId(resultSet.getString("id"));
+        account.setName(resultSet.getString("name"));
+        return account;
     }
 
     @Override
@@ -150,6 +172,21 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         Transaction transaction = new Transaction();
         transaction.setId(resultSet.getString("id"));
         return transaction;
+    }
+    public BigDecimal updateAccountBalance(String accountId, BigDecimal amount, Transaction.Type transactionType) {
+        // Mettre à jour le solde du compte
+        String updateBalanceQuery;
+        if (transactionType == Transaction.Type.debit) {
+            updateBalanceQuery = "UPDATE account SET balance = balance - ? WHERE id = ?";
+        } else {
+            updateBalanceQuery = "UPDATE account SET balance = balance + ? WHERE id = ?";
+        }
+
+        jdbcTemplate.update(updateBalanceQuery, amount, accountId);
+
+        // Récupérer le solde mis à jour
+        String selectBalanceQuery = "SELECT balance FROM account WHERE id = ?";
+        return jdbcTemplate.queryForObject(selectBalanceQuery, new Object[]{accountId}, BigDecimal.class);
     }
 
 }
