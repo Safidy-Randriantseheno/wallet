@@ -8,7 +8,7 @@ import java.util.List;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
-@Table(name = "\"devise\"")
+@Table(name = "\"currency\"")
 @Getter
 @Setter
 @ToString

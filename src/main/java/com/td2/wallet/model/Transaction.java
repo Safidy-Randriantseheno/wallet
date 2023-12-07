@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 @Table(name = "transaction")
@@ -28,7 +29,7 @@ public class Transaction {
     @Column(name = "amount")
     private BigDecimal amount;
     @Column(name = "transaction_date")
-    private Date transactionDate;
+    private LocalDate transactionDate;
     public enum Label {
         loan, purchase, repayment
     }
