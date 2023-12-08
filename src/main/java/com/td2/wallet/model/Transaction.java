@@ -20,12 +20,10 @@ public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
-    @ManyToOne
-    @JoinColumn(name = "account_id")
-    private Account accountId;
     @Enumerated(EnumType.STRING)
     private Label label;
-    private Type type;
+    @Enumerated(EnumType.STRING)
+    private Type transactionType;
     @Column(name = "amount")
     private BigDecimal amount;
     @Column(name = "transaction_date")
