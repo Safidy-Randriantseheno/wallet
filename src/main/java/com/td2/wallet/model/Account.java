@@ -3,6 +3,8 @@ package com.td2.wallet.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
@@ -22,14 +24,15 @@ public class Account {
     @JoinColumn(name = "currency_id")
     private Currency currencyId;
     @Enumerated(EnumType.STRING)
-    private Type type;
+    private Type accountType;
     @ManyToOne
-    @JoinColumn(name = "transaction_list_id")
-    private Transaction transactionList;
-    @ManyToOne
+    @JoinColumn(name = "transaction_id")
+    private List<Transaction> transactionList;
+    @OneToOne
+    @JoinColumn(name = "balance_id")
     private Balance balanceId;
     public enum Type {
-        bank, cash, mobileMoney
+        bank, cash, mobile_money
     }
 
 }

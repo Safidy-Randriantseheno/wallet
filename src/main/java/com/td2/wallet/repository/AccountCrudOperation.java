@@ -28,7 +28,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     public Balance findBalanceIdByAccountId(String accountId) {
-        String query = "SELECT * FROM balance WHERE account_id = ?";
+        String query = "SELECT * FROM balance WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, accountId);
