@@ -39,7 +39,6 @@ public class BalanceRepository{
                 id,
                 Timestamp.valueOf(dateTime)
         );
-
         return (balanceValue != null) ? balanceValue : BigDecimal.ZERO;
     }
 

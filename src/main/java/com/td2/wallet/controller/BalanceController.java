@@ -18,9 +18,9 @@ public class BalanceController {
     public BigDecimal getBalanceByDateAndId(
             @PathVariable String id,
             @PathVariable("date") LocalDateTime date) {
+
         return balanceService.getBalanceByDateTime(id, date);
     }
-
 }
 
 
