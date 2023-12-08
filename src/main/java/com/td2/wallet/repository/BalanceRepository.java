@@ -35,6 +35,16 @@ public class BalanceRepository {
             return null;
         }
     }
+    public BigDecimal getBalanceByDateTime(String id, LocalDateTime dateTime) {
+        String selectBalanceQuery = "SELECT balance_value FROM balance WHERE id = ? AND balance_date <= ? ORDER BY balance_date DESC LIMIT 1";
+        BigDecimal balanceValue = jdbcTemplate.queryForObject(
+                selectBalanceQuery,
+                BigDecimal.class,
+                id,
+                Timestamp.valueOf(dateTime)
+        );
+        return (balanceValue != null) ? balanceValue : BigDecimal.ZERO;
+    }
     public List<BalanceHistory> findByAccountIdAndTimestampBetween(String accountId, LocalDateTime start, LocalDateTime end) {
         String sql = "SELECT * FROM balance_history " +
                 "WHERE account_id = ? AND history_date BETWEEN ? AND ?";

@@ -18,6 +18,14 @@ public class BalanceController{
     @Autowired
     private BalanceService balanceService;
 
+    @GetMapping("/{id}/{date}")
+    public BigDecimal getBalanceByDateAndId(
+            @PathVariable String id,
+            @PathVariable("date") LocalDateTime date) {
+
+        return balanceService.getBalanceByDateTime(id, date);
+    }
+
     @PostMapping("/save")
     public ResponseEntity<Balance> saveBalanceEntry(@RequestBody Balance balance) {
         Balance savedBalance = balanceService.saveBalanceEntry(balance);
