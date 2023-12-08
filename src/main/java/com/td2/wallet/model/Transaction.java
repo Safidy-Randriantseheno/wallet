@@ -22,6 +22,7 @@ public class Transaction {
     private String id;
     @Enumerated(EnumType.STRING)
     private Label label;
+    @Enumerated(EnumType.STRING)
     private Type transactionType;
     @Column(name = "amount")
     private BigDecimal amount;
