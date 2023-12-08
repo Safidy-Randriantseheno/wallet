@@ -48,7 +48,7 @@ public class AccountService {
                     .orElseThrow(() -> new RuntimeException("Le compte avec l'ID " + accountId + " n'existe pas."));
 
             // Fetch balanceId for the given accountId
-            Balance balance = accountCrudOperation.findBalanceIdByAccountId(accountId);
+            Balance balance = accountCrudOperation.findBalanceByAccountId(accountId).getBalanceId();
             if (balance == null) {
                 throw new RuntimeException("Balance not found for the account.");
             }

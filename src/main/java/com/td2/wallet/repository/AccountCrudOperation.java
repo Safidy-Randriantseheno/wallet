@@ -28,7 +28,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     public Balance findBalanceIdByAccountId(String accountId) {
-        String query = "SELECT * FROM balance WHERE account_id = ?";
+        String query = "SELECT * FROM balance WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, accountId);
@@ -105,6 +105,30 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         }
         return null; // Return null if no account is found with the given ID
     }
+    public Account findBalanceByAccountId(String accountId) {
+        String query = "SELECT * FROM accounts WHERE id = ?";
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, accountId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    String balanceId = resultSet.getString("balance_id");
+
+                    // Use the findBalanceById method to retrieve the Balance object
+                    Balance balance = findBalanceById(balanceId);
+
+                    // Create and return the Account object
+                    Account account = new Account();
+                    account.setBalanceId(balance);
+                    return account;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     @Override
     public List<Account> saveAll(List<Account> toSave) {
         String query = "INSERT INTO accounts (id, name, currency_id) VALUES (?, ?, ?) ON CONFLICT (id) DO UPDATE SET name = excluded.name, currency_id = excluded.currency_id";
