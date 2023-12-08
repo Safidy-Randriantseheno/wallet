@@ -18,6 +18,7 @@
 
 package com.td2.wallet.controller;
 
+import com.td2.wallet.model.Account;
 import com.td2.wallet.model.Transaction;
 import com.td2.wallet.service.TransactionService;
 import lombok.AllArgsConstructor;
@@ -34,14 +35,13 @@ public class TransactionController {
     public List<Transaction> getAllTransaction(){
         return transactionService.getAll();
     }
-    @PostMapping("/saveAll")
-    public  List<Transaction> saveAllAccount(@RequestBody List<Transaction> transaction){
-        return transactionService.saveAll(transaction);
-
+    @GetMapping("/listId")
+    public Transaction getAllTransaction(@RequestParam  String accountId){
+        return transactionService.getTransactionById(accountId);
     }
-    @PostMapping("/save")
-    public  Transaction saveTransaction(@RequestBody Transaction transaction){
-        return transactionService.saveTransaction(transaction);
+    @PostMapping("/saveAll")
+    public  List<Transaction> saveAllList(@RequestBody List<Transaction> transaction){
+        return transactionService.saveAll(transaction);
 
     }
 }

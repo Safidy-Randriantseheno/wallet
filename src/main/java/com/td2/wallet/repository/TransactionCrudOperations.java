@@ -2,6 +2,8 @@
 package com.td2.wallet.repository;
 
 import com.td2.wallet.model.Account;
+import com.td2.wallet.model.Balance;
+import com.td2.wallet.model.Currency;
 import com.td2.wallet.model.Transaction;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import lombok.AllArgsConstructor;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,8 +24,7 @@ import java.util.List;
 public class TransactionCrudOperations implements CrudOperations<Transaction> {
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
-
+    private AccountCrudOperation accountCrudOperation;
     @Override
     public List<Transaction> findAll() {
         List<Transaction> transaction = new ArrayList<>();
@@ -32,12 +35,10 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
             while (resultSet.next()) {
                 String id = resultSet.getString("id");
                 BigDecimal amount = resultSet.getBigDecimal("amount");
-                Date transactionDate = resultSet.getDate("transaction_date") ;
+                LocalDate transactionDate = resultSet.getDate("transaction_date").toLocalDate();
                 Transaction.Label label = Transaction.Label.valueOf(resultSet.getString("label"));
-                Transaction.Type type = Transaction.Type.valueOf(resultSet.getString("type"));
-                String accountId = resultSet.getString("account_id");;
-                Account account = findAccountById(accountId);
-                transaction.add(new Transaction(id,account,label,type,amount,transactionDate));
+                Transaction.Type transactionType = Transaction.Type.valueOf(resultSet.getString("type"));
+                transaction.add(new Transaction(id,label,transactionType,amount,transactionDate));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -53,11 +54,10 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
             public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
                 Transaction transaction = toSave.get(i);
                 preparedStatement.setString(1, transaction.getId());
-                preparedStatement.setString(2, transaction.getAccountId().getId());
                 preparedStatement.setString(3, String.valueOf(transaction.getLabel()));
-                preparedStatement.setString(4, String.valueOf(transaction.getType()));
+                preparedStatement.setString(4, String.valueOf(transaction.getTransactionType()));
                 preparedStatement.setBigDecimal(6, transaction.getAmount());
-                preparedStatement.setDate(7, (java.sql.Date) transaction.getTransactionDate());
+                preparedStatement.setDate(7, java.sql.Date.valueOf(transaction.getTransactionDate()));
             }
             @Override
             public int getBatchSize() {
@@ -72,9 +72,8 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
         String query = "INSERT INTO transaction(id, account_id, label, type, amount, transaction_date ) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET account_id = excluded.account_id ,label = excluded.label,type = excluded.type,  amount = excluded.amount, transaction_date = excluded.transaction_date";
         int rowsAffected = jdbcTemplate.update(query,
                 toSave.getId(),
-                toSave.getAccountId().getId(),
                 toSave.getLabel(),
-                toSave.getType(),
+                toSave.getTransactionType(),
                 toSave.getAmount(),
                 toSave.getTransactionDate()
         );
@@ -86,27 +85,29 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
         }
     }
 
-    public Account findAccountById(String accountId) {
-        String query = "SELECT * FROM account WHERE id = ?";
+    public Transaction findTransactionById(String transactionId) {
+        String query = "SELECT * FROM transaction WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setString(1, accountId);
+            statement.setString(1, transactionId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    return mapResultSetToAccount(resultSet);
+                    String id = resultSet.getString("id");
+                    Transaction.Label label = Transaction.Label.valueOf(resultSet.getString(
+                            "label"));
+                    Transaction.Type type = Transaction.Type.valueOf(resultSet.getString(
+                            "type"));
+                    BigDecimal amount = resultSet.getBigDecimal("amount");
+                    LocalDate transactionDate = resultSet.getDate("transactionDate").toLocalDate();
+
+
+                    return new Transaction(id, label, type, amount, transactionDate );
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null;
-    }
-
-    private Account mapResultSetToAccount(ResultSet resultSet) throws SQLException {
-        Account account = new Account();
-        account.setId(resultSet.getString("id"));
-        account.setName(resultSet.getString("name"));
-        return account;
+        return null; // Return null if no transaction is found with the given ID
     }
 
 }

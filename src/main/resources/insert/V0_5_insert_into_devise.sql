@@ -1,8 +1,9 @@
-INSERT INTO "devise" (id, code, name, symbol)
-SELECT id, code, name, symbol
+-- Inserting data into the currency table if the ID does not exist
+INSERT INTO "currency" (id, code, name)
+SELECT id, code, name
 FROM (VALUES
-    ('1', 'ARI', 'Ariary', 'Ar'),
-    ('2', 'EUR', 'Euro', '€'),
-    ('3', 'USD', 'US Dollar', '$')
-) AS data(id, code, name, symbol)
-WHERE NOT EXISTS (SELECT 1 FROM "devise" WHERE id = data.id);
+  ('c1', 'EUR'::"code", 'Euro'::"name"),
+  ('c2', 'MGA'::"code", 'Arriary'::"name")
+  ('c3', 'EUR'::"code", 'Euro'::"name")
+) AS data(id, code, name)
+WHERE NOT EXISTS (SELECT 1 FROM "currency" WHERE id = data.id);
