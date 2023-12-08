@@ -17,6 +17,7 @@ public class BalanceHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
     private String accountId;
-    private LocalDateTime timestamp;
-    private Double balanceValue;
+    private String balanceId;
+    private LocalDateTime historyDate;
+
 }
