@@ -24,8 +24,8 @@ public class TransactionService {
         return transactionCrudOperations.saveAll(transaction);
     }
 
-    public Account getTransactionById(String accountId) {
-        return transactionCrudOperations.findTransactionById(accountId);
+    public Transaction getTransactionById(String transactionId) {
+        return transactionCrudOperations.findTransactionById(transactionId);
 }
 }
 
