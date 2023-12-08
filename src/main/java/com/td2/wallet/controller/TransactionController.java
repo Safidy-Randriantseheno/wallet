@@ -39,10 +39,5 @@ public class TransactionController {
         return transactionService.saveAll(transaction);
 
     }
-    @PostMapping("/save")
-    public  Transaction saveTransaction(@RequestBody Transaction transaction){
-        return transactionService.saveTransaction(transaction);
-
-    }
 }
 

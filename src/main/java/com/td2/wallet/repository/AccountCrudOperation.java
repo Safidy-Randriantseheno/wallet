@@ -2,7 +2,6 @@ package com.td2.wallet.repository;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.td2.wallet.model.Account;
 import com.td2.wallet.model.Balance;
@@ -17,16 +16,14 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.sql.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Repository
 public class AccountCrudOperation implements CrudOperations<Account> {
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
     public Balance findBalanceIdByAccountId(String accountId) {
         String query = "SELECT * FROM balance WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
@@ -66,7 +63,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                 Currency currency = findCurrencyById(currencyId);
                 Account.Type type = Account.Type.valueOf(resultSet.getString("account_type"));
                 Balance balance = findBalanceById(balanceId);
-                 accounts.add(new Account(id, name, currency, type, transactions, balance));
+                accounts.add(new Account(id, name, currency, type, transactions, balance));
 
             }
         } catch (SQLException e) {
@@ -74,6 +71,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         }
         return accounts;
     }
+
     public Account findAccountById(String accountId) {
         String query = "SELECT * FROM accounts WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
@@ -105,6 +103,31 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         }
         return null; // Return null if no account is found with the given ID
     }
+    public String findAccountId(String accountId) {
+        String query = "SELECT id FROM accounts WHERE id = ?";
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, accountId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    // Retrieve the 'id' from the result set
+                    return resultSet.getString("id");
+                }
+            }
+
+        } catch (SQLException e) {
+            // Log the exception or throw a custom exception
+            e.printStackTrace(); // Replace this with proper logging
+        }
+
+        // Account not found
+        return null;
+    }
+
+
+
     public Account findBalanceByAccountId(String accountId) {
         String query = "SELECT * FROM accounts WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
@@ -128,6 +151,75 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         }
         return null;
     }
+
+    public Account insertOrUpdateTransactionList(String accountId, List<String> newTransactions) {
+        try {
+            // Combine the existing and new transactions
+            List<String> existingTransactions = findTransactionList(accountId);
+            existingTransactions.addAll(newTransactions);
+
+            // Convert the combined list back to a comma-separated string
+            String updatedTransactionList = String.join(",", existingTransactions);
+
+            // Use a single SQL query to insert or update the transaction_list
+            String query = "UPDATE accounts SET transaction_list = CASE WHEN id = ? THEN ? ELSE transaction_list END WHERE id IN (?, ?)";
+            try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                    PreparedStatement statement = connection.prepareStatement(query)) {
+                statement.setString(1, accountId);
+                statement.setString(2, updatedTransactionList);
+                statement.setString(3, accountId);
+                statement.setString(4, "non-existent-id");  // Add a non-existent ID to prevent conflicts
+
+                // Execute the update
+                int rowsAffected = statement.executeUpdate();
+
+                // Check if the update was successful
+                if (rowsAffected > 0) {
+                    return findAccountById(accountId);
+                } else {
+                    // If no rows were affected, insert the new row
+                    query = "INSERT INTO accounts (id, transaction_list) VALUES (?, ?)";
+                    try (PreparedStatement insertStatement = connection.prepareStatement(query)) {
+                        insertStatement.setString(1, accountId);
+                        insertStatement.setString(2, updatedTransactionList);
+                        insertStatement.executeUpdate();
+                    }
+                }
+            }
+
+            return findAccountById(accountId);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error during account operation.", e);
+        }
+    }
+
+    private List<String> findTransactionList(String accountId) {
+        List<String> transactionList = new ArrayList<>();
+
+        String query = "SELECT transaction_list FROM accounts WHERE id = ?";
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, accountId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    String transactionListAsString = resultSet.getString("transaction_list");
+                    if (transactionListAsString != null && !transactionListAsString.isEmpty()) {
+                        // Split the comma-separated string into a list of transaction IDs
+                        transactionList = Arrays.asList(transactionListAsString.split(","));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return transactionList;
+    }
+
+
 
     @Override
     public List<Account> saveAll(List<Account> toSave) {
@@ -156,7 +248,15 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
     @Override
     public Account save(Account toSave) {
-        String query = "INSERT INTO accounts (id, name, currency_id, account_type, transaction_list, balance_id) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET name = excluded.name, currency_id = excluded.currency_id account_type = excluded.account_type transaction_list = excluded.transaction_list balance_id = excluded.balance_id";
+        String query = "INSERT INTO accounts (id, name, currency_id, account_type, transaction_list, balance_id)\n" +
+                "VALUES (?, ?, ?, ?, ?, ?)\n" +
+                "ON CONFLICT (id)\n" +
+                "DO UPDATE SET\n" +
+                "  name = excluded.name,\n" +
+                "  currency_id = excluded.currency_id,\n" +
+                "  account_type = excluded.account_type,\n" +
+                "  transaction_list = excluded.transaction_list,\n" +
+                "  balance_id = excluded.balance_id;";
         int rowsAffected = jdbcTemplate.update(query,
                 toSave.getId(),
                 toSave.getName(),
@@ -201,6 +301,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         }
         return null;
     }
+
     public Transaction findTransactionIdByAccountId(String transactionId) {
         String query = "SELECT * FROM transaction WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
@@ -255,6 +356,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
         return transaction;
     }
+
     public BigDecimal updateAccountBalance(String accountId, BigDecimal amount, Transaction.Type transactionType) {
         // Mettre à jour le solde du compte
         String updateBalanceQuery;
@@ -270,5 +372,6 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         String selectBalanceQuery = "SELECT balance FROM account WHERE id = ?";
         return jdbcTemplate.queryForObject(selectBalanceQuery, new Object[]{accountId}, BigDecimal.class);
     }
+
 
 }

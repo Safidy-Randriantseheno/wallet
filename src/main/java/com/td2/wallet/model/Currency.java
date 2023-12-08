@@ -23,8 +23,6 @@ public class Currency {
     private Name name;
     @Enumerated(EnumType.STRING)
     private Code code;
-    @OneToMany(mappedBy = "currencyId")
-    private List<Account> accounts;
     public enum Name {
         Euro, Arriary
     }

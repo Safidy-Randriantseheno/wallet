@@ -4,16 +4,13 @@ import com.td2.wallet.model.Account;
 import com.td2.wallet.model.Balance;
 import com.td2.wallet.model.Transaction;
 import com.td2.wallet.repository.AccountCrudOperation;
-import com.td2.wallet.repository.BalanceRepository;
 import com.td2.wallet.repository.TransactionCrudOperations;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,10 +38,10 @@ public class AccountService {
 
 
     @Transactional
-    public Account effectuerTransaction(String accountId, String type, Double amount) {
+    public String effectuerTransaction(String accountId, String id, String label1, String type, Double amount, LocalDate transaction_date) {
         try {
             // Use orElseThrow to get the Account or throw an exception if not present
-            Account account = Optional.ofNullable(accountCrudOperation.findAccountById(accountId))
+            String account = Optional.ofNullable(accountCrudOperation.findAccountId(accountId))
                     .orElseThrow(() -> new RuntimeException("Le compte avec l'ID " + accountId + " n'existe pas."));
 
             // Fetch balanceId for the given accountId
@@ -68,6 +65,9 @@ public class AccountService {
             }
 
             Transaction transaction = Transaction.builder()
+                    .id(id)
+                    .label(Transaction.Label.valueOf(label1))
+                    .transactionDate(transaction_date)
                     .transactionType(Transaction.Type.valueOf(type))
                     .amount(BigDecimal.valueOf(amount))
                     .build();
@@ -78,7 +78,7 @@ public class AccountService {
             balance.setBalance_value(newBalance);
             // Note: You may need to update the logic here based on your data model
             // E.g., account.setBalanceId(balance) or account.setBalance(balance)
-            accountCrudOperation.save(account);
+            accountCrudOperation.insertOrUpdateTransactionList(accountId, (List<String>) transaction);
 
             return account;
 
