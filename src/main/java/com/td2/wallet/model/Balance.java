@@ -19,6 +19,7 @@ public class Balance {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     private String id;
-    private BigDecimal balance_value;
+    private Double balance_value;
     private LocalDate balance_date;
+
 }
