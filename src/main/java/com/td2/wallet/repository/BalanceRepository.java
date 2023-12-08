@@ -1,6 +1,7 @@
 package com.td2.wallet.repository;
 
 import com.td2.wallet.model.Balance;
+import com.td2.wallet.model.BalanceHistory;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -8,6 +9,9 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
 @AllArgsConstructor
 @Repository
 public class BalanceRepository {
@@ -28,6 +32,16 @@ public class BalanceRepository {
             return null;
         }
     }
+    public List<BalanceHistory> findByAccountIdAndTimestampBetween(String accountId, LocalDateTime start, LocalDateTime end) {
+        String sql = "SELECT * FROM balance_history " +
+                "WHERE account_id = ? AND timestamp BETWEEN ? AND ?";
 
-
+        return jdbcTemplate.query(sql, new Object[]{accountId, start, end}, (resultSet, rowNum) -> {
+            BalanceHistory entry = new BalanceHistory();
+            entry.setId(resultSet.getString("id"));
+            // Set other fields accordingly
+            return entry;
+        });
+    }
+}
 }
