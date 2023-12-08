@@ -31,10 +31,6 @@ public class Account {
     @OneToOne
     @JoinColumn(name = "balance_id")
     private Balance balanceId;
-
-
-
-
     public enum Type {
         bank, cash, mobile_money
     }

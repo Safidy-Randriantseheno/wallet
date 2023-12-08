@@ -3,7 +3,9 @@ package com.td2.wallet.repository;
 
 import com.td2.wallet.model.Account;
 import com.td2.wallet.model.Transaction;
+import com.td2.wallet.model.TransferHistory;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -23,6 +25,7 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     private AccountCrudOperation accountCrudOperation;
+    private TransactionCrudOperations transactionCrudOperations;
     @Override
     public List<Transaction> findAll() {
         List<Transaction> transaction = new ArrayList<>();
@@ -89,9 +92,74 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
             return null;
         }
     }
+    @Transactional
+    public void transferMoney(String debitAccountId, String creditAccountId, BigDecimal amount) {
+        // Check if both accounts exist
+        if (!accountExists(debitAccountId) || !accountExists(creditAccountId)) {
+            throw new RuntimeException("Invalid account IDs");
+        }
 
+        // Check if the debit and credit accounts are the same
+        if (debitAccountId.equals(creditAccountId)) {
+            throw new RuntimeException("Cannot transfer money to the same account");
+        }
 
+        // Check if the debit account has sufficient balance for the transfer
+        if (getAccountBalance(debitAccountId).compareTo(amount) < 0) {
+            throw new RuntimeException("Insufficient balance for the transfer");
+        }
+
+        // Perform the transfer using JDBC Template
+        jdbcTemplate.update("UPDATE accounts SET balance = balance - ? WHERE id = ?", amount, debitAccountId);
+        jdbcTemplate.update("UPDATE accounts SET balance = balance + ? WHERE id = ?", amount, creditAccountId);
+
+        // Record transfer history
+        Transaction debitTransaction = new Transaction();
+        debitTransaction.setTransactionType(Transaction.Type.debit);
+        debitTransaction.setAmount(amount);
+
+        Transaction creditTransaction = new Transaction();
+        creditTransaction.setTransactionType(Transaction.Type.credit);
+        creditTransaction.setAmount(amount);
+
+        Transaction debitTransactionId = transactionCrudOperations.save(debitTransaction);
+        Transaction creditTransactionId = transactionCrudOperations.save(creditTransaction);
+
+        jdbcTemplate.update("INSERT INTO transfer_history (debit_transaction_id, credit_transaction_id) VALUES (?, ?)",
+                debitTransactionId, creditTransactionId);
+    }
+
+    private boolean accountExists(String accountId) {
+        String query = "SELECT COUNT(*) FROM accounts WHERE id = ?";
+        Integer count = jdbcTemplate.queryForObject(query, Integer.class, accountId);
+        return count != null && count > 0;
+    }
+
+    private BigDecimal getAccountBalance(String accountId) {
+        String query = "SELECT balance FROM accounts WHERE id = ?";
+        return jdbcTemplate.queryForObject(query, BigDecimal.class, accountId);
+    }
+    public void saveTransferHistory(TransferHistory transferHistory) {
+        String insertQuery = "INSERT INTO transfer_history (debit_transaction_id, credit_transaction_id, transfer_date) VALUES (?, ?, ?)";
+        jdbcTemplate.update(insertQuery,
+                transferHistory.getCreditTransaction(),
+                transferHistory.getCreditTransaction(),
+                transferHistory.getTransferDate());
+    }
+    public List<TransferHistory> findByTransferDateBetween(LocalDateTime start, LocalDateTime end) {
+        String selectQuery = "SELECT * FROM transfer_history WHERE transfer_date BETWEEN ? AND ?";
+        return jdbcTemplate.query(selectQuery,
+                (resultSet, rowNum) -> TransferHistory.builder()
+                        .id(resultSet.getLong("id"))
+                        .debitTransaction(resultSet.getString("debit_transaction_id"))
+                        .creditTransaction(resultSet.getString("credit_transaction_id"))
+                        .transferDate(resultSet.getTimestamp("transfer_date").toLocalDateTime())
+                        .build(),
+                start, end);
+    }
 }
+
+
 
 
 

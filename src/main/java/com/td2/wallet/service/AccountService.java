@@ -78,7 +78,7 @@ public class AccountService {
             balance.setBalance_value(newBalance);
             // Note: You may need to update the logic here based on your data model
             // E.g., account.setBalanceId(balance) or account.setBalance(balance)
-            accountCrudOperation.insertOrUpdateTransactionList(accountId, (List<String>) transaction);
+            accountCrudOperation.insertOrUpdateTransactionList(accountId, List.of(transaction.toString()));
 
             return account;
 

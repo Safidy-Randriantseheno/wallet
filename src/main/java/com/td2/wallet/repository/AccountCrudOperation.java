@@ -189,9 +189,9 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
             return findAccountById(accountId);
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Error during account operation.", e);
+            throw new RuntimeException("\nError during account operation: " + e.getMessage(), e);
         }
     }
 

@@ -54,7 +54,8 @@ public class AccountController {
                 // Handle the case where amount is null
                 System.out.println("Amount is null!");
             }
-            LocalDate transactionDate = (LocalDate) payload.get("transaction_date");
+            String transactionDateString = (String) payload.get("transaction_date");
+            LocalDate transactionDate = LocalDate.parse(transactionDateString);
 
             // Call the service to perform the transaction
             accountService.effectuerTransaction(accountId, id, String.valueOf(label1), String.valueOf(type), amount, transactionDate);
