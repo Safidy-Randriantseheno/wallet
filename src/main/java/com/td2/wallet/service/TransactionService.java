@@ -25,10 +25,9 @@ public class TransactionService {
         return transactionCrudOperations.saveAll(transaction);
     }
     @Transactional
-    public void recordTransferHistory(Transaction debitTransactionId, Transaction creditTransactionId) {
+    public void recordTransferHistory( List<Transaction> transactionType) {
         TransferHistory transferHistory = TransferHistory.builder()
-                .debitTransaction(debitTransactionId)
-                .creditTransaction(creditTransactionId)
+                .transactionType(transactionType)
                 .transferDate(LocalDateTime.now())
                 .build();
 

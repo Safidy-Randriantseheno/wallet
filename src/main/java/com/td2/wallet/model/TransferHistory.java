@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "\"transfer_history\"")
@@ -16,15 +17,10 @@ import java.time.LocalDateTime;
 public class TransferHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     @ManyToOne
-    @JoinColumn(name = "debit_transaction_id")
-    private Transaction debitTransaction;
-
-    @ManyToOne
-    @JoinColumn(name = "credit_transaction_id")
-    private Transaction creditTransaction;
-
+    @JoinColumn(name = "transaction_type")
+    private List<Transaction> transactionType;
     private LocalDateTime transferDate;
 }

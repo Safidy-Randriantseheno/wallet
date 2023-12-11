@@ -1,9 +1,7 @@
 
 package com.td2.wallet.repository;
 
-import com.td2.wallet.model.Account;
-import com.td2.wallet.model.Transaction;
-import com.td2.wallet.model.TransferHistory;
+import com.td2.wallet.model.*;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -12,6 +10,7 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import javax.management.Query;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDate;
@@ -140,22 +139,60 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
         return jdbcTemplate.queryForObject(query, BigDecimal.class, accountId);
     }
     public void saveTransferHistory(TransferHistory transferHistory) {
-        String insertQuery = "INSERT INTO transfer_history (debit_transaction_id, credit_transaction_id, transfer_date) VALUES (?, ?, ?)";
+        String insertQuery = "INSERT INTO transfer_history (transaction_type, transfer_date) VALUES (?, ?, ?)";
         jdbcTemplate.update(insertQuery,
-                transferHistory.getCreditTransaction(),
-                transferHistory.getCreditTransaction(),
+                transferHistory.getTransactionType(),
                 transferHistory.getTransferDate());
     }
-    public List<TransferHistory> findByTransferDateBetween(LocalDateTime start, LocalDateTime end) {
-        String selectQuery = "SELECT * FROM transfer_history WHERE transfer_date BETWEEN ? AND ?";
-        return jdbcTemplate.query(selectQuery,
-                (resultSet, rowNum) -> TransferHistory.builder()
-                        .id(resultSet.getLong("id"))
-                        .debitTransaction(resultSet.getString("debit_transaction_id"))
-                        .creditTransaction(resultSet.getString("credit_transaction_id"))
-                        .transferDate(resultSet.getTimestamp("transfer_date").toLocalDateTime())
-                        .build(),
-                start, end);
+
+    public List<TransferHistory> findByTransferDateBetween(LocalDateTime startDate, LocalDateTime endDate) {
+        String queryString = "SELECT th FROM Transfer_history th WHERE th.transfer_date BETWEEN :startDate AND :endDate";
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(queryString)) {
+            statement.setString(1, String.valueOf(startDate));
+            statement.setString(2, String.valueOf( endDate));
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    String id = resultSet.getString("id");
+                    String typeTransaction = resultSet.getString("transaction_type");
+                    LocalDateTime date = resultSet.getDate("transfer_date").toLocalDate().atStartOfDay();
+                    Transaction transactionType = findTransactionByType(typeTransaction);
+
+                    // Convert the single transaction to a list
+                    List<Transaction> transactionsType = new ArrayList<>();
+                    if (transactionType != null) {
+                        transactionsType.add(transactionType);
+                    }
+
+                    return (List<TransferHistory>) new TransferHistory(id, transactionsType, date);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; // Return null if no account is found with the given ID
+    }
+
+    public Transaction findTransactionByType(String transactionType){
+        String queryString = "SELECT * FROM Transaction WHERE TYPE = ?";
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(queryString)) {
+            statement.setString(1, transactionType);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToTransaction(resultSet);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    private Transaction mapResultSetToTransaction(ResultSet resultSet) throws SQLException {
+        Transaction transaction = new Transaction();
+        transaction.setId(resultSet.getString("id"));
+        transaction.setTransactionType(Transaction.Type.valueOf((resultSet.getString("transaction_credit_id"))));
+        return transaction;
     }
 }
 
