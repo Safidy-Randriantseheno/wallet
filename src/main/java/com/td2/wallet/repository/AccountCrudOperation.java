@@ -129,7 +129,9 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
 
     public Account findBalanceByAccountId(String accountId) {
-        String query = "SELECT * FROM accounts WHERE id = ?";
+        String query = "SELECT balance_value" +
+                "FROM balance" +
+                "WHERE account_id = :accountId;";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, accountId);
