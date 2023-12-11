@@ -24,7 +24,6 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     private AccountCrudOperation accountCrudOperation;
-    private TransactionCrudOperations transactionCrudOperations;
     @Override
     public List<Transaction> findAll() {
         List<Transaction> transaction = new ArrayList<>();
@@ -121,8 +120,8 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
         creditTransaction.setTransactionType(Transaction.Type.credit);
         creditTransaction.setAmount(amount);
 
-        Transaction debitTransactionId = transactionCrudOperations.save(debitTransaction);
-        Transaction creditTransactionId = transactionCrudOperations.save(creditTransaction);
+        Transaction debitTransactionId = save(debitTransaction);
+        Transaction creditTransactionId = save(creditTransaction);
 
         jdbcTemplate.update("INSERT INTO transfer_history (debit_transaction_id, credit_transaction_id) VALUES (?, ?)",
                 debitTransactionId, creditTransactionId);

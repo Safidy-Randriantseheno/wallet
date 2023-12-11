@@ -6,18 +6,17 @@ import com.td2.wallet.model.Transaction;
 import com.td2.wallet.model.TransferHistory;
 import com.td2.wallet.repository.TransactionCrudOperations;
 import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 @Service
+@AllArgsConstructor
 public class TransactionService {
     @Autowired
     private TransactionCrudOperations transactionCrudOperations;
-    public TransactionService(TransactionCrudOperations transactionCrudOperations) {
-        this.transactionCrudOperations = transactionCrudOperations;
-    }
     public List<Transaction> getAll(){
         return transactionCrudOperations.findAll();
     }
