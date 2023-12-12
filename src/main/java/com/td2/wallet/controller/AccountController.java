@@ -4,20 +4,21 @@ import com.td2.wallet.model.Account;
 import com.td2.wallet.model.Transaction;
 
 import com.td2.wallet.service.AccountService;
+import com.td2.wallet.service.TransactionService;
 import lombok.AllArgsConstructor;
-import org.springframework.transaction.support.TransactionOperations;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+
 import java.util.List;
-import java.util.Map;
+
 
 @RestController
 @RequestMapping("/accounts")
 @AllArgsConstructor
 public class AccountController {
     private final AccountService accountService;
+    private final TransactionService transactionService;
     @GetMapping("/list")
     public List<Account> getAllAccount(){
         return accountService.getAll();
@@ -30,6 +31,15 @@ public class AccountController {
     public  List<Account> saveAllAccount(@RequestBody List<Account> accounts){
         return accountService.saveAll(accounts);
 
+    }
+    @PostMapping("/save/transaction/accountId/")
+    public Transaction saveTransactionByAccountId(
+            @RequestParam String accountId,
+            @RequestParam Transaction.Label transactionLabel,
+            @RequestParam Transaction.TransactionType transactionType,
+            @RequestParam BigDecimal amount
+            ){
+        return transactionService.executeDebitCreditTransaction(accountId, transactionLabel, transactionType, amount);
     }
 
     @PostMapping("/save")

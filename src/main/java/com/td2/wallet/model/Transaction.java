@@ -6,7 +6,6 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Date;
 
 @Table(name = "transaction")
 @Entity
@@ -20,10 +19,13 @@ public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
+    @ManyToOne
+    @JoinColumn(name = "account_id")
+    private Account accountId    ;
     @Enumerated(EnumType.STRING)
     private Label label;
     @Enumerated(EnumType.STRING)
-    private Type transactionType;
+    private TransactionType transactionType;
     @Column(name = "amount")
     private BigDecimal amount;
     @Column(name = "transaction_date")
@@ -31,7 +33,7 @@ public class Transaction {
     public enum Label {
         loan, purchase, repayment
     }
-    public enum Type {
+    public enum TransactionType {
         debit, credit
     }
 }

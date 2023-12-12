@@ -33,11 +33,14 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
              ResultSet resultSet = statement.executeQuery(query)) {
             while (resultSet.next()) {
                 String id = resultSet.getString("id");
+                String accountID = resultSet.getString("account_id");
+                Account account = accountCrudOperation.findAccountById(accountID);
                 BigDecimal amount = resultSet.getBigDecimal("amount");
                 LocalDate transactionDate = resultSet.getDate("transaction_date").toLocalDate();
                 Transaction.Label label = Transaction.Label.valueOf(resultSet.getString("label"));
-                Transaction.Type transactionType = Transaction.Type.valueOf(resultSet.getString("type"));
-                transaction.add(new Transaction(id,label,transactionType,amount,transactionDate));
+                Transaction.TransactionType transactionType = Transaction.TransactionType.valueOf(resultSet.getString("type"));
+                transaction.add(new Transaction(id,account,label,transactionType,amount,transactionDate));
+
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -47,17 +50,28 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
 
     @Override
     public List<Transaction> saveAll(List<Transaction> toSave) {
-        String query = "INSERT INTO transaction(id, account_id, label, type, amount, transaction_date ) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET account_id = excluded.account_id ,label = excluded.label,type = excluded.type,  amount = excluded.amount, transaction_date = excluded.transaction_date";
+        String query = "INSERT INTO transaction(id, account_id, label, transaction_type, amount, transaction_date) " +
+                "VALUES (?, ?, ?, ?, ?, ?) " +
+                "ON CONFLICT (id) DO UPDATE " +
+                "SET label = excluded.label, " +
+                "    transaction_type = excluded.transaction_type, " +
+                "    amount = excluded.amount, " +
+                "    transaction_date = excluded.transaction_date, " +
+                "    account_id = excluded.account_id";
+
         jdbcTemplate.batchUpdate(query, new BatchPreparedStatementSetter() {
+
             @Override
             public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
                 Transaction transaction = toSave.get(i);
                 preparedStatement.setString(1, transaction.getId());
-                preparedStatement.setString(3, String.valueOf(transaction.getLabel()));
-                preparedStatement.setString(4, String.valueOf(transaction.getTransactionType()));
-                preparedStatement.setBigDecimal(6, transaction.getAmount());
-                preparedStatement.setDate(7, java.sql.Date.valueOf(transaction.getTransactionDate()));
+                preparedStatement.setString(2, String.valueOf(transaction.getAccountId()));
+                preparedStatement.setString(3, transaction.getLabel().name());
+                preparedStatement.setString(4, transaction.getTransactionType().name());
+                preparedStatement.setBigDecimal(5, transaction.getAmount());
+                preparedStatement.setTimestamp(6, Timestamp.valueOf(transaction.getTransactionDate().atStartOfDay()));
             }
+
             @Override
             public int getBatchSize() {
                 return toSave.size();
@@ -67,21 +81,24 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
         return toSave;
     }
     @Override
-    public Transaction save(Transaction toSave) {
-        String query = "INSERT INTO transaction(id, label, transaction_type, amount, transaction_date) " +
-                "VALUES (?, CAST(? AS label), CAST(? AS transaction_type), ?, ?) " +
+    public Transaction  save(Transaction toSave) {
+        String query = "INSERT INTO transaction( label, transaction_type, amount, transaction_date, account_id) " +
+                "VALUES ( ?::label, ?::transaction_type, ?, ?, ?) " +
                 "ON CONFLICT (id) DO UPDATE " +
                 "SET label = excluded.label, " +
                 "    transaction_type = excluded.transaction_type, " +
                 "    amount = excluded.amount, " +
-                "    transaction_date = excluded.transaction_date";
+                "    transaction_date = excluded.transaction_date," +
+                "    account_id = excluded.account_id";
+
 
         int rowsAffected = jdbcTemplate.update(query,
-                toSave.getId(),
+
                 (toSave.getLabel() != null) ? toSave.getLabel().name() : null,
-                toSave.getTransactionType().name(),
+                (toSave.getTransactionType() != null) ? toSave.getTransactionType().name() : null,
                 toSave.getAmount(),
-                toSave.getTransactionDate()
+                toSave.getTransactionDate(),
+                toSave.getAccountId().getId()
         );
 
         if (rowsAffected > 0) {
@@ -90,6 +107,7 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
             return null;
         }
     }
+
     @Transactional
     public void transferMoney(String debitAccountId, String creditAccountId, BigDecimal amount) {
         // Check if both accounts exist
@@ -113,11 +131,11 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
 
         // Record transfer history
         Transaction debitTransaction = new Transaction();
-        debitTransaction.setTransactionType(Transaction.Type.debit);
+        debitTransaction.setTransactionType(Transaction.TransactionType.debit);
         debitTransaction.setAmount(amount);
 
         Transaction creditTransaction = new Transaction();
-        creditTransaction.setTransactionType(Transaction.Type.credit);
+        creditTransaction.setTransactionType(Transaction.TransactionType.credit);
         creditTransaction.setAmount(amount);
 
         Transaction debitTransactionId = save(debitTransaction);
@@ -190,7 +208,7 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     private Transaction mapResultSetToTransaction(ResultSet resultSet) throws SQLException {
         Transaction transaction = new Transaction();
         transaction.setId(resultSet.getString("id"));
-        transaction.setTransactionType(Transaction.Type.valueOf((resultSet.getString("transaction_credit_id"))));
+        transaction.setTransactionType(Transaction.TransactionType.valueOf((resultSet.getString("transaction_credit_id"))));
         return transaction;
     }
 }

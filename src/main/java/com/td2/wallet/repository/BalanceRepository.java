@@ -2,6 +2,7 @@ package com.td2.wallet.repository;
 
 import com.td2.wallet.model.Balance;
 import com.td2.wallet.model.BalanceHistory;
+import com.td2.wallet.model.Transaction;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -35,6 +36,14 @@ public class BalanceRepository {
             return null;
         }
     }
+    public void updateAccountBalance(String accountId, Transaction.TransactionType transactionType, BigDecimal amount) {
+        String updateQuery = "UPDATE balance SET balance_value = " +
+                "CASE WHEN ? = 'debit' THEN balance_value - ? " +
+                "ELSE balance_value + ? END, " +
+                "balance_date = CURRENT_DATE " +
+                "WHERE id = (SELECT balance_id FROM accounts WHERE id = ?)";
+        jdbcTemplate.update(updateQuery, transactionType.name(), amount, amount, accountId);
+    }
     public List<BalanceHistory> findByAccountIdAndTimestampBetween(String accountId, LocalDateTime start, LocalDateTime end) {
         String sql = "SELECT * FROM balance_history " +
                 "WHERE account_id = ? AND history_date BETWEEN ? AND ?";
@@ -57,7 +66,7 @@ public class BalanceRepository {
             return jdbcTemplate.queryForObject(query, new Object[]{balanceId}, (resultSet, rowNum) -> {
                 Balance balance = new Balance();
                 balance.setId(resultSet.getString("id"));
-                balance.setBalance_value(resultSet.getDouble("balance_value"));
+                balance.setBalance_value(resultSet.getBigDecimal("balance_value"));
                 balance.setBalance_date(LocalDate.from(resultSet.getTimestamp("balance_date").toLocalDateTime()));
                 // Set other fields accordingly
                 return balance;
