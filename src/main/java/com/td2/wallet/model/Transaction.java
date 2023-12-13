@@ -22,20 +22,17 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "account_id")
     private Account accountId    ;
-    @Enumerated(EnumType.STRING)
-    private Label label;
-    @Enumerated(EnumType.STRING)
-    private TransactionType transactionType;
     @Column(name = "amount")
     private BigDecimal amount;
     @Column(name = "transaction_date")
     private LocalDate transactionDate;
+    @ManyToOne
+    @JoinColumn(name = "category_id_id")
+    private Category categoryId;
     public enum Label {
         loan, purchase, repayment
     }
-    public enum TransactionType {
-        debit, credit
-    }
+
 }
 
 
