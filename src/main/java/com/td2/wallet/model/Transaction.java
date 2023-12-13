@@ -29,8 +29,6 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "category_id_id")
     private Category categoryId;
-
-
 }
 
 

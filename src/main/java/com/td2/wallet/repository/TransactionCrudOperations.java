@@ -6,8 +6,10 @@ import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Repository;
 
 import javax.management.Query;
@@ -37,7 +39,7 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
                 Account account = accountCrudOperation.findAccountById(accountID);
                 BigDecimal amount = resultSet.getBigDecimal("amount");
                 LocalDate transactionDate = resultSet.getDate("transaction_date").toLocalDate();
-                Transaction.Label label = Transaction.Label.valueOf(resultSet.getString("label"));
+
                 Transaction.TransactionType transactionType = Transaction.TransactionType.valueOf(resultSet.getString("type"));
                 transaction.add(new Transaction(id,account,label,transactionType,amount,transactionDate));
 
@@ -208,8 +210,25 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     private Transaction mapResultSetToTransaction(ResultSet resultSet) throws SQLException {
         Transaction transaction = new Transaction();
         transaction.setId(resultSet.getString("id"));
-        transaction.setTransactionType(Transaction.TransactionType.valueOf((resultSet.getString("transaction_credit_id"))));
+        String categoryId = resultSet.getString("transaction_category_id");
+         Category category = new Category();
+        if (categoryId != null) {
+            category.add(categoryId);
+        }
+
         return transaction;
+    }
+    public List<Transaction> findTransactionsByCategoryId(String categoryId) {
+        String sql = "SELECT t.*, c.type FROM transaction t JOIN category c ON t.category_id = c.id WHERE c.id = ?";
+
+        return  jdbcTemplate.query(sql, new Object[]{categoryId}, (resultSet, rowNum) -> {
+            Transaction transaction = new Transaction();
+            transaction.setId(resultSet.getString("id"));
+            Category category = new Category();
+            category.setType(Category.CategoryType.valueOf(resultSet.getString("type")));
+            transaction.setCategoryId(category);
+            return transaction;
+        });
     }
 }
 

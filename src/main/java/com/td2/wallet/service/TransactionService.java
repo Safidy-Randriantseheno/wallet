@@ -61,18 +61,18 @@ public class TransactionService {
             }
 
             // Get the Category or throw an exception if not present
-            Category category = Optional.ofNullable(categoryRepository.findCategoryById(categoryId))
+            Transaction categoryType = (Transaction) Optional.ofNullable(transactionCrudOperations.findTransactionsByCategoryId(categoryId))
                     .orElseThrow(() -> new RuntimeException("La catégorie avec l'ID " + categoryId + " n'existe pas."));
 
             BigDecimal currentBalance = balance.getBalance_value();
 
             BigDecimal newBalance;
-            if (Category.CategoryType.debit.equals(category.getType())) {
+            if (Category.CategoryType.debit.equals(categoryType)) {
                 if (currentBalance.compareTo(amount) < 0) {
                     throw new RuntimeException("Insufficient balance to complete the debit.");
                 }
                 newBalance = currentBalance.subtract(amount);
-            } else if (Category.CategoryType.credit.equals(category.getType())) {
+            } else if (Category.CategoryType.credit.equals(categoryType)) {
                 newBalance = currentBalance.add(amount);
             } else {
                 throw new RuntimeException("The category type must be 'debit' or 'credit'.");
@@ -80,7 +80,7 @@ public class TransactionService {
 
             Transaction transaction = Transaction.builder()
                     .accountId(account)
-                    .categoryId(category)
+                    .categoryId(categoryType.getCategoryId())
                     .amount(amount)
                     .transactionDate(LocalDate.now())
                     .build();
@@ -88,7 +88,7 @@ public class TransactionService {
             // Save the transaction and update the balance
             transactionCrudOperations.save(transaction);
             balance.setBalance_value(newBalance);
-            balanceRepository.updateAccountBalance(accountId, category.getType(), newBalance);
+            balanceRepository.updateAccountBalance(accountId, categoryType, newBalance);
 
             return transaction;
 
