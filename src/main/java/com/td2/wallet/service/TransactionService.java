@@ -48,7 +48,7 @@ public class TransactionService {
     public List<TransferHistory> getTransferHistoryBetween(LocalDateTime start, LocalDateTime end) {
         return transactionCrudOperations.findByTransferDateBetween(start, end);
     }
-    public Transaction executeDebitCreditTransaction(String accountId, String categoryId, BigDecimal amount) {
+    public Transaction executeDebitCreditTransaction(String accountId, Category categoryId, BigDecimal amount) {
         try {
             // Use orElseThrow to get the Account or throw an exception if not present
             Account account = Optional.ofNullable(accountCrudOperation.findAccountById(accountId))
@@ -61,7 +61,7 @@ public class TransactionService {
             }
 
             // Get the Category or throw an exception if not present
-            Transaction categoryType = (Transaction) Optional.ofNullable(transactionCrudOperations.findTransactionsByCategoryId(categoryId))
+            Transaction categoryType = (Transaction) Optional.ofNullable(transactionCrudOperations.findTransactionsByCategoryId(String.valueOf(categoryId)))
                     .orElseThrow(() -> new RuntimeException("La catégorie avec l'ID " + categoryId + " n'existe pas."));
 
             BigDecimal currentBalance = balance.getBalance_value();

@@ -1,6 +1,7 @@
 package com.td2.wallet.controller;
 
 import com.td2.wallet.model.Account;
+import com.td2.wallet.model.Category;
 import com.td2.wallet.model.Transaction;
 
 import com.td2.wallet.service.AccountService;
@@ -35,11 +36,10 @@ public class AccountController {
     @PostMapping("/save/transaction/accountId/")
     public Transaction saveTransactionByAccountId(
             @RequestParam String accountId,
-            @RequestParam Transaction.Label transactionLabel,
-            @RequestParam Transaction.TransactionType transactionType,
+            @RequestBody Category category,
             @RequestParam BigDecimal amount
             ){
-        return transactionService.executeDebitCreditTransaction(accountId, transactionLabel, transactionType, amount);
+        return transactionService.executeDebitCreditTransaction(accountId, category, amount);
     }
 
     @PostMapping("/save")
