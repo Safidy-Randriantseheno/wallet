@@ -29,9 +29,7 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "category_id_id")
     private Category categoryId;
-    public enum Label {
-        loan, purchase, repayment
-    }
+
 
 }
 

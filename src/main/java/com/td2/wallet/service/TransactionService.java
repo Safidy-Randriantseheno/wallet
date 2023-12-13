@@ -2,12 +2,10 @@
 
 package com.td2.wallet.service;
 
-import com.td2.wallet.model.Account;
-import com.td2.wallet.model.Balance;
-import com.td2.wallet.model.Transaction;
-import com.td2.wallet.model.TransferHistory;
+import com.td2.wallet.model.*;
 import com.td2.wallet.repository.AccountCrudOperation;
 import com.td2.wallet.repository.BalanceRepository;
+import com.td2.wallet.repository.CategoryRepository;
 import com.td2.wallet.repository.TransactionCrudOperations;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -27,6 +25,7 @@ public class TransactionService {
     private TransactionCrudOperations transactionCrudOperations;
     private AccountCrudOperation accountCrudOperation;
     private BalanceRepository balanceRepository;
+    private CategoryRepository categoryRepository;
     public List<Transaction> getAll(){
         return transactionCrudOperations.findAll();
     }
@@ -49,7 +48,7 @@ public class TransactionService {
     public List<TransferHistory> getTransferHistoryBetween(LocalDateTime start, LocalDateTime end) {
         return transactionCrudOperations.findByTransferDateBetween(start, end);
     }
-    public Transaction executeDebitCreditTransaction(String accountId,Transaction.Label transactionLabel, Transaction.TransactionType transactionType, BigDecimal amount) {
+    public Transaction executeDebitCreditTransaction(String accountId, String categoryId, BigDecimal amount) {
         try {
             // Use orElseThrow to get the Account or throw an exception if not present
             Account account = Optional.ofNullable(accountCrudOperation.findAccountById(accountId))
@@ -61,24 +60,27 @@ public class TransactionService {
                 throw new RuntimeException("Balance not found for the account.");
             }
 
+            // Get the Category or throw an exception if not present
+            Category category = Optional.ofNullable(categoryRepository.findCategoryById(categoryId))
+                    .orElseThrow(() -> new RuntimeException("La catégorie avec l'ID " + categoryId + " n'existe pas."));
+
             BigDecimal currentBalance = balance.getBalance_value();
 
             BigDecimal newBalance;
-            if (Transaction.TransactionType.debit.equals(transactionType)) {
+            if (Category.CategoryType.debit.equals(category.getType())) {
                 if (currentBalance.compareTo(amount) < 0) {
                     throw new RuntimeException("Insufficient balance to complete the debit.");
                 }
                 newBalance = currentBalance.subtract(amount);
-            } else if (Transaction.TransactionType.credit.equals(transactionType)) {
+            } else if (Category.CategoryType.credit.equals(category.getType())) {
                 newBalance = currentBalance.add(amount);
             } else {
-                throw new RuntimeException("The transaction type must be 'debit' or 'credit'.");
+                throw new RuntimeException("The category type must be 'debit' or 'credit'.");
             }
 
             Transaction transaction = Transaction.builder()
                     .accountId(account)
-                    .label(transactionLabel)
-                    .transactionType(transactionType)
+                    .categoryId(category)
                     .amount(amount)
                     .transactionDate(LocalDate.now())
                     .build();
@@ -86,7 +88,7 @@ public class TransactionService {
             // Save the transaction and update the balance
             transactionCrudOperations.save(transaction);
             balance.setBalance_value(newBalance);
-            balanceRepository.updateAccountBalance(accountId, transactionType, newBalance);
+            balanceRepository.updateAccountBalance(accountId, category.getType(), newBalance);
 
             return transaction;
 
@@ -95,6 +97,7 @@ public class TransactionService {
             throw new RuntimeException("\n" + "Error during transaction operation.", e);
         }
     }
+
 }
 
 

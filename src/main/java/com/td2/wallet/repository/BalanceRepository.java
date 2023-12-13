@@ -2,7 +2,7 @@ package com.td2.wallet.repository;
 
 import com.td2.wallet.model.Balance;
 import com.td2.wallet.model.BalanceHistory;
-import com.td2.wallet.model.Transaction;
+import com.td2.wallet.model.Category;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -36,7 +36,7 @@ public class BalanceRepository {
             return null;
         }
     }
-    public void updateAccountBalance(String accountId, Transaction.TransactionType transactionType, BigDecimal amount) {
+    public void updateAccountBalance(String accountId, Category.CategoryType transactionType, BigDecimal amount) {
         String updateQuery = "UPDATE balance SET balance_value = " +
                 "CASE WHEN ? = 'debit' THEN balance_value - ? " +
                 "ELSE balance_value + ? END, " +

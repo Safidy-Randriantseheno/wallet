@@ -19,7 +19,7 @@ public class Category {
     @Enumerated(EnumType.STRING)
     private CategoryType type;
     public enum CategoryType{
-        debit, credit, both
+        debit, credit
     }
 
 }
