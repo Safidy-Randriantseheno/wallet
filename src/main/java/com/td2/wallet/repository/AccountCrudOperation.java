@@ -325,7 +325,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
     }
 
     public Transaction findTransactionIdByAccountId(String transactionId) {
-        String query = "SELECT * FROM transaction WHERE id = ?";
+        String query = "SELECT id, amount, transaction_date, category_id FROM transaction WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, transactionId);
@@ -379,8 +379,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
             Category category = categoryRepository.findCategoryById(categoryId);
             transaction.setCategoryId(category);
         }
-        Account account = findAccountById(resultSet.getString("account_id"));
-        transaction.setAccountId(account);
+
 
         return transaction;
     }
