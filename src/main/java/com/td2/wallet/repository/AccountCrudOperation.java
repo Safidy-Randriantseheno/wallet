@@ -3,10 +3,8 @@ package com.td2.wallet.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.td2.wallet.model.Account;
-import com.td2.wallet.model.Balance;
+import com.td2.wallet.model.*;
 import com.td2.wallet.model.Currency;
-import com.td2.wallet.model.Transaction;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -352,18 +350,23 @@ public class AccountCrudOperation implements CrudOperations<Account> {
     private Transaction mapResultSetToTransaction(ResultSet resultSet) throws SQLException {
         Transaction transaction = new Transaction();
         transaction.setId(resultSet.getString("id"));
-        transaction.setLabel(Transaction.Label.valueOf(resultSet.getString("label")));
+        Category category = Category.builder()
+                .id(resultSet.getString("category_id"))
+                .name(resultSet.getString("category_name"))
+                .type(Category.CategoryType.valueOf(resultSet.getString("category_type")))
+                .build();
+        transaction.setCategoryId(category);
+
         transaction.setAmount(resultSet.getBigDecimal("amount"));
-        transaction.setTransactionType(Transaction.TransactionType.valueOf(resultSet.getString("transaction_type")));
         transaction.setTransactionDate(resultSet.getDate("transaction_date").toLocalDate());
 
         return transaction;
     }
 
-    public BigDecimal updateAccountBalance(String accountId, BigDecimal amount, Transaction.TransactionType transactionType) {
+    public BigDecimal updateAccountBalance(String accountId, BigDecimal amount, Category.CategoryType transactionType) {
         // Mettre à jour le solde du compte
         String updateBalanceQuery;
-        if (transactionType == Transaction.TransactionType.debit) {
+        if (transactionType == Category.CategoryType.debit.debit) {
             updateBalanceQuery = "UPDATE account SET balance_id = balance_id - ? WHERE id = ?";
         } else {
             updateBalanceQuery = "UPDATE account SET balance_id = balance_id + ? WHERE id = ?";
