@@ -26,6 +26,7 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     private AccountCrudOperation accountCrudOperation;
+    private CategoryRepository categoryRepository;
     @Override
     public List<Transaction> findAll() {
         List<Transaction> transaction = new ArrayList<>();
@@ -39,13 +40,9 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
                 Account account = accountCrudOperation.findAccountById(accountID);
                 BigDecimal amount = resultSet.getBigDecimal("amount");
                 LocalDate transactionDate = resultSet.getDate("transaction_date").toLocalDate();
-                Category category = Category.builder()
-                        .id(resultSet.getString("category_id"))
-                        .name(resultSet.getString("category_name"))
-                        .type(Category.CategoryType.valueOf(resultSet.getString("category_type")))
-                        .build();
-
-                transaction.add(new Transaction(id,account,amount,transactionDate,category));
+                String category = resultSet.getString("category_id");
+                Category categoryId = categoryRepository.findCategoryById(category);
+                transaction.add(new Transaction(id,account,amount,transactionDate,categoryId));
 
             }
         } catch (SQLException e) {
