@@ -3,12 +3,12 @@ package com.td2.wallet.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.td2.wallet.model.Account;
-import com.td2.wallet.model.Balance;
+import com.td2.wallet.model.*;
 import com.td2.wallet.model.Currency;
-import com.td2.wallet.model.Transaction;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,11 +18,15 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 
+
 @AllArgsConstructor
 @Repository
 public class AccountCrudOperation implements CrudOperations<Account> {
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    private CategoryRepository categoryRepository;
+    private static final Logger logger = LoggerFactory.getLogger(AccountCrudOperation.class);
+
 
     public Balance findBalanceIdByAccountId(String accountId) {
         String query = "SELECT * FROM balance WHERE id = ?";
@@ -72,6 +76,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         return accounts;
     }
 
+
     public Account findAccountById(String accountId) {
         String query = "SELECT * FROM accounts WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
@@ -103,8 +108,8 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         }
         return null; // Return null if no account is found with the given ID
     }
-    public String findAccountId(String accountId) {
-        String query = "SELECT id FROM accounts WHERE id = ?";
+    public Account findAccountId(String accountId) {
+        String query = "SELECT id, name, currency_id, account_type, balance_id FROM accounts WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
 
@@ -112,8 +117,22 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    // Retrieve the 'id' from the result set
-                    return resultSet.getString("id");
+                    Account account = new Account();
+                    account.setId(resultSet.getString("id"));
+                    account.setName(resultSet.getString("name"));
+                    account.setAccountType(Account.Type.valueOf(resultSet.getString("account_type")));
+                    String currencyId = resultSet.getString("currency_id");
+                    if (currencyId != null) {
+                        Currency currency = findCurrencyById(currencyId);
+                        account.setCurrencyId(currency);
+                    }
+                    String balanceId = resultSet.getString("balance_id");
+                    if (balanceId != null) {
+                        Balance balance = findBalanceById(balanceId);
+                        account.setBalanceId(balance);
+                    }
+
+                    return account;
                 }
             }
 
@@ -128,29 +147,32 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
 
 
-    public Account findBalanceByAccountId(String accountId) {
-        String query = "SELECT * FROM accounts WHERE id = ?";
+    public Balance findBalanceByAccountId(String accountId) {
+        String query = "SELECT b.balance_value " +
+                "FROM accounts a " +
+                "JOIN balance b ON a.balance_id = b.id " +
+                "WHERE a.id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, accountId);
+
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    String balanceId = resultSet.getString("balance_id");
+                    BigDecimal balanceValue = resultSet.getBigDecimal("balance_value");
 
-                    // Use the findBalanceById method to retrieve the Balance object
-                    Balance balance = findBalanceById(balanceId);
-
-                    // Create and return the Account object
-                    Account account = new Account();
-                    account.setBalanceId(balance);
-                    return account;
+                    // Create and return the Balance object
+                    Balance balance = new Balance();
+                    balance.setBalance_value(balanceValue);
+                    return balance;
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return null;
     }
+
 
     public Account insertOrUpdateTransactionList(String accountId, List<String> newTransactions) {
         try {
@@ -297,13 +319,13 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error executing SQL query", e);
         }
         return null;
     }
 
     public Transaction findTransactionIdByAccountId(String transactionId) {
-        String query = "SELECT * FROM transaction WHERE id = ?";
+        String query = "SELECT id, amount, transaction_date, category_id FROM transaction WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, transactionId);
@@ -313,7 +335,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error executing SQL query", e);
         }
         return null;
     }
@@ -328,14 +350,14 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error executing SQL query", e);
         }
         return null;
     }
     private Balance mapResultSetToBalance(ResultSet resultSet) throws SQLException {
         Balance balance = new Balance();
         balance.setId(resultSet.getString("id"));
-        balance.setBalance_value(Double.valueOf(resultSet.getString("balance_value")));
+        balance.setBalance_value(resultSet.getBigDecimal("balance_value"));
         balance.setBalance_date(resultSet.getDate("balance_date").toLocalDate());
         return balance;
     }
@@ -349,27 +371,32 @@ public class AccountCrudOperation implements CrudOperations<Account> {
     private Transaction mapResultSetToTransaction(ResultSet resultSet) throws SQLException {
         Transaction transaction = new Transaction();
         transaction.setId(resultSet.getString("id"));
-        transaction.setLabel(Transaction.Label.valueOf(resultSet.getString("label")));
         transaction.setAmount(resultSet.getBigDecimal("amount"));
-        transaction.setTransactionType(Transaction.Type.valueOf(resultSet.getString("transaction_type")));
         transaction.setTransactionDate(resultSet.getDate("transaction_date").toLocalDate());
+
+        String categoryId = resultSet.getString("category_id");
+        if (categoryId != null) {
+            Category category = categoryRepository.findCategoryById(categoryId);
+            transaction.setCategoryId(category);
+        }
+
 
         return transaction;
     }
 
-    public BigDecimal updateAccountBalance(String accountId, BigDecimal amount, Transaction.Type transactionType) {
+    public BigDecimal updateAccountBalance(String accountId, BigDecimal amount, Category.CategoryType transactionType) {
         // Mettre à jour le solde du compte
         String updateBalanceQuery;
-        if (transactionType == Transaction.Type.debit) {
-            updateBalanceQuery = "UPDATE account SET balance = balance - ? WHERE id = ?";
+        if (transactionType == Category.CategoryType.debit.debit) {
+            updateBalanceQuery = "UPDATE account SET balance_id = balance_id - ? WHERE id = ?";
         } else {
-            updateBalanceQuery = "UPDATE account SET balance = balance + ? WHERE id = ?";
+            updateBalanceQuery = "UPDATE account SET balance_id = balance_id + ? WHERE id = ?";
         }
 
         jdbcTemplate.update(updateBalanceQuery, amount, accountId);
 
         // Récupérer le solde mis à jour
-        String selectBalanceQuery = "SELECT balance FROM account WHERE id = ?";
+        String selectBalanceQuery = "SELECT balance_id FROM account WHERE id = ?";
         return jdbcTemplate.queryForObject(selectBalanceQuery, new Object[]{accountId}, BigDecimal.class);
     }
 

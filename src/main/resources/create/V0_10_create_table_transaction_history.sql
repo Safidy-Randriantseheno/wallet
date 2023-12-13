@@ -1,8 +1,6 @@
 CREATE TABLE IF NOT EXISTS "transfer_history" (
     id                   VARCHAR PRIMARY KEY DEFAULT uuid_generate_v4(),
-    debit_transaction_id varchar NOT NULL,
-    credit_transaction_id varchar NOT NULL,
-    transfer_date        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (debit_transaction_id) REFERENCES transaction(id),
-    FOREIGN KEY (credit_transaction_id) REFERENCES transaction(id)
+    transaction_type varchar NOT NULL REFERENCES "transaction"("id"),
+    transfer_date        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+create index if not exists transaction_type_index on "transfer_history" ("transaction_type");

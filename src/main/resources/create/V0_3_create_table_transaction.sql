@@ -11,8 +11,6 @@ $$
 $$;
 CREATE TABLE IF NOT EXISTS "transaction" (
     id            varchar                       constraint transaction_pk primary key default uuid_generate_v4(),
-    label               label                   not null,
-    transaction_type    transaction_type                    not null,
     amount              DECIMAL(10, 2)          NOT NULL,
     transaction_date    TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
     );
