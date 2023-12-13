@@ -1,9 +1,18 @@
 
-INSERT INTO "transaction" (id, label, transaction_type, amount, transaction_date)
-SELECT id, label, type, amount, transaction_date
+INSERT INTO "transaction" (id, amount, transaction_date, account_id, category_id)
+SELECT id, amount, transaction_date, account_id, category_id
 FROM (VALUES
-    ('t1', 'loan'::"label", 'debit'::"transaction_type", 100.00, CURRENT_TIMESTAMP),
-    ('t2', 'purchase'::"label", 'credit'::"transaction_type", 50.00, CURRENT_TIMESTAMP),
-    ('t3', 'repayment'::"label", 'credit'::"transaction_type", 30.00, CURRENT_TIMESTAMP)
-) AS data(id, label, type, amount, transaction_date)
+    ('t1', 100.00, CURRENT_TIMESTAMP,'a1','ca1'),
+    ('t2', 50.00, CURRENT_TIMESTAMP,'a2','ca2'),
+    ('t3', 50.00, CURRENT_TIMESTAMP,'a1','ca3'),
+    ('t4', 20.00, CURRENT_TIMESTAMP,'a2','ca1'),
+) AS data(id, amount, transaction_date, account_id, category_id)
+WHERE NOT EXISTS (SELECT 1 FROM "transaction" WHERE id = data.id);
+
+
+INSERT INTO "transaction" (id, amount, transaction_date, account_id, category_id)
+SELECT id, amount, transaction_date, account_id, category_id
+FROM (VALUES
+    ('t4', 20.00, CURRENT_TIMESTAMP,'a2','ca1')
+) AS data(id, amount, transaction_date, account_id, category_id)
 WHERE NOT EXISTS (SELECT 1 FROM "transaction" WHERE id = data.id);

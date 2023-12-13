@@ -7,6 +7,8 @@ import com.td2.wallet.model.*;
 import com.td2.wallet.model.Currency;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,11 +18,15 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 
+
 @AllArgsConstructor
 @Repository
 public class AccountCrudOperation implements CrudOperations<Account> {
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    private CategoryRepository categoryRepository;
+    private static final Logger logger = LoggerFactory.getLogger(AccountCrudOperation.class);
+
 
     public Balance findBalanceIdByAccountId(String accountId) {
         String query = "SELECT * FROM balance WHERE id = ?";
@@ -70,6 +76,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         return accounts;
     }
 
+
     public Account findAccountById(String accountId) {
         String query = "SELECT * FROM accounts WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
@@ -101,8 +108,8 @@ public class AccountCrudOperation implements CrudOperations<Account> {
         }
         return null; // Return null if no account is found with the given ID
     }
-    public String findAccountId(String accountId) {
-        String query = "SELECT id FROM accounts WHERE id = ?";
+    public Account findAccountId(String accountId) {
+        String query = "SELECT id, name, currency_id, account_type, balance_id FROM accounts WHERE id = ?";
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
 
@@ -110,8 +117,22 @@ public class AccountCrudOperation implements CrudOperations<Account> {
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    // Retrieve the 'id' from the result set
-                    return resultSet.getString("id");
+                    Account account = new Account();
+                    account.setId(resultSet.getString("id"));
+                    account.setName(resultSet.getString("name"));
+                    account.setAccountType(Account.Type.valueOf(resultSet.getString("account_type")));
+                    String currencyId = resultSet.getString("currency_id");
+                    if (currencyId != null) {
+                        Currency currency = findCurrencyById(currencyId);
+                        account.setCurrencyId(currency);
+                    }
+                    String balanceId = resultSet.getString("balance_id");
+                    if (balanceId != null) {
+                        Balance balance = findBalanceById(balanceId);
+                        account.setBalanceId(balance);
+                    }
+
+                    return account;
                 }
             }
 
@@ -298,7 +319,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error executing SQL query", e);
         }
         return null;
     }
@@ -314,7 +335,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error executing SQL query", e);
         }
         return null;
     }
@@ -329,7 +350,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error executing SQL query", e);
         }
         return null;
     }
@@ -350,15 +371,16 @@ public class AccountCrudOperation implements CrudOperations<Account> {
     private Transaction mapResultSetToTransaction(ResultSet resultSet) throws SQLException {
         Transaction transaction = new Transaction();
         transaction.setId(resultSet.getString("id"));
-        Category category = Category.builder()
-                .id(resultSet.getString("category_id"))
-                .name(resultSet.getString("category_name"))
-                .type(Category.CategoryType.valueOf(resultSet.getString("category_type")))
-                .build();
-        transaction.setCategoryId(category);
-
         transaction.setAmount(resultSet.getBigDecimal("amount"));
         transaction.setTransactionDate(resultSet.getDate("transaction_date").toLocalDate());
+
+        String categoryId = resultSet.getString("category_id");
+        if (categoryId != null) {
+            Category category = categoryRepository.findCategoryById(categoryId);
+            transaction.setCategoryId(category);
+        }
+        Account account = findAccountById(resultSet.getString("account_id"));
+        transaction.setAccountId(account);
 
         return transaction;
     }

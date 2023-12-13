@@ -16,23 +16,21 @@ public class CategoryRepository {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     public Category findCategoryById(String categoryId) {
-        String sql = "SELECT * FROM category WHERE id = ?";
-        return jdbcTemplate.query(sql, new Object[]{categoryId}, categoryResultSetExtractor);
-    }
+        String sql = "SELECT id, name, type FROM category WHERE id = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{categoryId}, (resultSet, rowNum) -> {
+                Category category = new Category();
+                category.setId(resultSet.getString("id"));
+                category.setName(resultSet.getString("name"));
+                category.setType(Category.CategoryType.valueOf(resultSet.getString("type")));
+                return category;
+            });
+        } catch (Exception e) {
 
-    private final ResultSetExtractor<Category> categoryResultSetExtractor = resultSet -> {
-        if (resultSet.next()) {
-            return mapResultSetToCategory(resultSet);
-        } else {
+            e.printStackTrace();
             return null;
         }
-    };
-
-    private Category mapResultSetToCategory(ResultSet resultSet) throws SQLException {
-        return Category.builder()
-                .id(resultSet.getString("id"))
-                .name(resultSet.getString("name"))
-                .type(Category.CategoryType.valueOf(resultSet.getString("type")))
-                .build();
     }
+
+
 }

@@ -45,6 +45,10 @@ public class TransactionController {
         return transactionService.saveAll(transaction);
 
     }
+    @GetMapping("/transactionId")
+    public Transaction getTransactionId(@RequestParam String id){
+        return transactionService.getById(id);
+    }
     @PostMapping("/money")
     public String transferMoney(@RequestParam String debitAccountId,
                                 @RequestParam String creditAccountId,

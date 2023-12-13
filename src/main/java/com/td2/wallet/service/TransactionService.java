@@ -98,6 +98,9 @@ public class TransactionService {
         }
     }
 
+    public Transaction getById(String id) {
+        return transactionCrudOperations.findTransactionById(id);
+    }
 }
 
 

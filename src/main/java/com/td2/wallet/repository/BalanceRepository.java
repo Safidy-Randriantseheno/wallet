@@ -3,6 +3,7 @@ package com.td2.wallet.repository;
 import com.td2.wallet.model.Balance;
 import com.td2.wallet.model.BalanceHistory;
 import com.td2.wallet.model.Category;
+import com.td2.wallet.model.Transaction;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -36,13 +37,13 @@ public class BalanceRepository {
             return null;
         }
     }
-    public void updateAccountBalance(String accountId, Category.CategoryType transactionType, BigDecimal amount) {
+    public void updateAccountBalance(String accountId, Transaction transactionCategoryType, BigDecimal amount) {
         String updateQuery = "UPDATE balance SET balance_value = " +
                 "CASE WHEN ? = 'debit' THEN balance_value - ? " +
                 "ELSE balance_value + ? END, " +
                 "balance_date = CURRENT_DATE " +
                 "WHERE id = (SELECT balance_id FROM accounts WHERE id = ?)";
-        jdbcTemplate.update(updateQuery, transactionType.name(), amount, amount, accountId);
+        jdbcTemplate.update(updateQuery, transactionCategoryType.getCategoryId().getType(), amount, amount, accountId);
     }
     public List<BalanceHistory> findByAccountIdAndTimestampBetween(String accountId, LocalDateTime start, LocalDateTime end) {
         String sql = "SELECT * FROM balance_history " +

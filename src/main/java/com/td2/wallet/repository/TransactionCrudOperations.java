@@ -5,6 +5,8 @@ import com.td2.wallet.model.*;
 import com.td2.wallet.repository.interfacegenerique.CrudOperations;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -27,6 +29,8 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     private JdbcTemplate jdbcTemplate;
     private AccountCrudOperation accountCrudOperation;
     private CategoryRepository categoryRepository;
+    private static final Logger logger = LoggerFactory.getLogger(TransactionCrudOperations.class);
+
     @Override
     public List<Transaction> findAll() {
         List<Transaction> transaction = new ArrayList<>();
@@ -36,8 +40,8 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
              ResultSet resultSet = statement.executeQuery(query)) {
             while (resultSet.next()) {
                 String id = resultSet.getString("id");
-                String accountID = resultSet.getString("account_id");
-                Account account = accountCrudOperation.findAccountById(accountID);
+                String accountId = resultSet.getString("account_id");
+                Account account = accountCrudOperation.findAccountById(accountId);
                 BigDecimal amount = resultSet.getBigDecimal("amount");
                 LocalDate transactionDate = resultSet.getDate("transaction_date").toLocalDate();
                 String category = resultSet.getString("category_id");
@@ -231,6 +235,41 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
             transaction.setCategoryId(category);
             return transaction;
         });
+    }
+
+    public Transaction findTransactionById(String transactionId) {
+        String query = "SELECT * FROM transaction WHERE id = ?";
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, transactionId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToTransactionId(resultSet);
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Error executing SQL query", e);
+        }
+        return null;
+    }
+    private Transaction mapResultSetToTransactionId(ResultSet resultSet) throws SQLException {
+        Transaction transaction = new Transaction();
+        transaction.setId(resultSet.getString("id"));
+        transaction.setAmount(resultSet.getBigDecimal("amount"));
+        transaction.setTransactionDate(resultSet.getDate("transaction_date").toLocalDate());
+
+        String accountId = resultSet.getString("account_id");
+        if (accountId != null) {
+            Account account = accountCrudOperation.findAccountId(accountId);
+            transaction.setAccountId(account);
+        }
+        String categoryId = resultSet.getString("category_id");
+        if (categoryId != null) {
+            Category category = categoryRepository.findCategoryById(categoryId);
+            transaction.setCategoryId(category);
+        }
+
+        return transaction;
     }
 }
 
