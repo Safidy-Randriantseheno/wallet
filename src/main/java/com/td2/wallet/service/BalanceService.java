@@ -7,6 +7,7 @@ import com.td2.wallet.repository.BalanceRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class BalanceService {
     }
     public BigDecimal getBalanceByDateTime(String id, LocalDateTime date) {
         // Utilise repository pour récupérer le solde en function de l'ID et de la date et heure
-        return balanceRepository.getBalanceByDateTime(id, date);
+        return balanceRepository.getBalanceByDateTime(id, date).getBalance_value();
     }
 
 }

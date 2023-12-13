@@ -80,6 +80,21 @@ public class BalanceRepository {
             throw new RuntimeException("Error fetching Balance by ID", e);
         }
     }
+    public Balance getBalanceByDateTime(String accountId, LocalDateTime dateTime) {
+        String query = "SELECT * FROM balance WHERE account_id = ? AND timestamp <= ? ORDER BY timestamp DESC LIMIT 1";
+
+        try {
+            return jdbcTemplate.queryForObject(query, new Object[]{accountId, dateTime}, (resultSet, rowNum) -> {
+                Balance balance = new Balance();
+                balance.setId(resultSet.getString("id"));
+                balance.setBalance_date(resultSet.getDate("timestamp").toLocalDate());
+                return balance;
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
 }
 
