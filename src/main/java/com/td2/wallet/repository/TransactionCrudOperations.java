@@ -39,9 +39,13 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
                 Account account = accountCrudOperation.findAccountById(accountID);
                 BigDecimal amount = resultSet.getBigDecimal("amount");
                 LocalDate transactionDate = resultSet.getDate("transaction_date").toLocalDate();
+                Category category = Category.builder()
+                        .id(resultSet.getString("category_id"))
+                        .name(resultSet.getString("category_name"))
+                        .type(Category.CategoryType.valueOf(resultSet.getString("category_type")))
+                        .build();
 
-                Transaction.TransactionType transactionType = Transaction.TransactionType.valueOf(resultSet.getString("type"));
-                transaction.add(new Transaction(id,account,label,transactionType,amount,transactionDate));
+                transaction.add(new Transaction(id,account,amount,transactionDate,category));
 
             }
         } catch (SQLException e) {
@@ -68,10 +72,9 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
                 Transaction transaction = toSave.get(i);
                 preparedStatement.setString(1, transaction.getId());
                 preparedStatement.setString(2, String.valueOf(transaction.getAccountId()));
-                preparedStatement.setString(3, transaction.getLabel().name());
-                preparedStatement.setString(4, transaction.getTransactionType().name());
-                preparedStatement.setBigDecimal(5, transaction.getAmount());
-                preparedStatement.setTimestamp(6, Timestamp.valueOf(transaction.getTransactionDate().atStartOfDay()));
+                preparedStatement.setString(3, transaction.getCategoryId().toString());
+                preparedStatement.setBigDecimal(4, transaction.getAmount());
+                preparedStatement.setTimestamp(5, Timestamp.valueOf(transaction.getTransactionDate().atStartOfDay()));
             }
 
             @Override
@@ -84,8 +87,8 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     }
     @Override
     public Transaction  save(Transaction toSave) {
-        String query = "INSERT INTO transaction( label, transaction_type, amount, transaction_date, account_id) " +
-                "VALUES ( ?::label, ?::transaction_type, ?, ?, ?) " +
+        String query = "INSERT INTO transaction( amount, transaction_date, account_id, category_id) " +
+                "VALUES ( ?,?,?,?) " +
                 "ON CONFLICT (id) DO UPDATE " +
                 "SET label = excluded.label, " +
                 "    transaction_type = excluded.transaction_type, " +
@@ -95,9 +98,7 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
 
 
         int rowsAffected = jdbcTemplate.update(query,
-
-                (toSave.getLabel() != null) ? toSave.getLabel().name() : null,
-                (toSave.getTransactionType() != null) ? toSave.getTransactionType().name() : null,
+                toSave.getCategoryId().builder().build(),
                 toSave.getAmount(),
                 toSave.getTransactionDate(),
                 toSave.getAccountId().getId()
@@ -133,11 +134,15 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
 
         // Record transfer history
         Transaction debitTransaction = new Transaction();
-        debitTransaction.setTransactionType(Transaction.TransactionType.debit);
+        debitTransaction.setCategoryId(Category.builder()
+                        .type(Category.CategoryType.debit)
+                .build());
         debitTransaction.setAmount(amount);
 
         Transaction creditTransaction = new Transaction();
-        creditTransaction.setTransactionType(Transaction.TransactionType.credit);
+        creditTransaction.setCategoryId(
+                Category.builder()
+                .type(Category.CategoryType.credit).build());
         creditTransaction.setAmount(amount);
 
         Transaction debitTransactionId = save(debitTransaction);
@@ -211,10 +216,10 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
         Transaction transaction = new Transaction();
         transaction.setId(resultSet.getString("id"));
         String categoryId = resultSet.getString("transaction_category_id");
-         Category category = new Category();
-        if (categoryId != null) {
-            category.add(categoryId);
-        }
+         Category category = Category.builder()
+                 .id(categoryId)
+                 .build();
+        transaction.setCategoryId(category);
 
         return transaction;
     }
