@@ -152,7 +152,7 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     }
 
     private BigDecimal getAccountBalance(String accountId) {
-        String query = "SELECT balance FROM accounts WHERE id = ?";
+        String query = "SELECT balance_id FROM accounts WHERE id = ?";
         return jdbcTemplate.queryForObject(query, BigDecimal.class, accountId);
     }
     public void saveTransferHistory(TransferHistory transferHistory) {
