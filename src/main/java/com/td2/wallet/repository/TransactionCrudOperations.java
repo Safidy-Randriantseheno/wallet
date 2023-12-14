@@ -42,10 +42,18 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
                 String id = resultSet.getString("id");
                 String accountId = resultSet.getString("account_id");
                 Account account = accountCrudOperation.findAccountById(accountId);
+                List<Account> accounts = new ArrayList<>();
+                if (accountId != null) {
+                    accounts.add(account);
+                }
                 BigDecimal amount = resultSet.getBigDecimal("amount");
                 LocalDate transactionDate = resultSet.getDate("transaction_date").toLocalDate();
                 String category = resultSet.getString("category_id");
                 Category categoryId = categoryRepository.findCategoryById(category);
+                List<Category> categories = new ArrayList<>();
+                if (categoryId != null) {
+                    categories.add(categoryId);
+                }
                 transaction.add(new Transaction(id,account,amount,transactionDate,categoryId));
 
             }
