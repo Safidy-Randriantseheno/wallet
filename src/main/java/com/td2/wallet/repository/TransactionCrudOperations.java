@@ -96,21 +96,21 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     }
     @Override
     public Transaction  save(Transaction toSave) {
-        String query = "INSERT INTO transaction( amount, transaction_date, account_id, category_id) " +
-                "VALUES ( ?,?,?,?) " +
-                "ON CONFLICT (id) DO UPDATE " +
-                "SET label = excluded.label, " +
-                "    transaction_type = excluded.transaction_type, " +
-                "    amount = excluded.amount, " +
-                "    transaction_date = excluded.transaction_date," +
-                "    account_id = excluded.account_id";
+        String query = "INSERT INTO transaction ( amount, transaction_date, account_id, category_id)\n" +
+                "VALUES ( ?, ?, ?, ?)\n" +
+                "ON CONFLICT (id)\n" +
+                "DO UPDATE SET\n" +
+                "  amount = excluded.amount,\n" +
+                "  transaction_date = excluded.transaction_date,\n" +
+                "  account_id = excluded.account_id,\n" +
+                "  category_id = excluded.category_id;\n" ;
 
 
         int rowsAffected = jdbcTemplate.update(query,
-                toSave.getCategoryId().builder().build(),
                 toSave.getAmount(),
                 toSave.getTransactionDate(),
-                toSave.getAccountId().getId()
+                toSave.getAccountId(),
+                toSave.getCategoryId().getId()
         );
 
         if (rowsAffected > 0) {
@@ -233,17 +233,25 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
         return transaction;
     }
     public List<Transaction> findTransactionsByCategoryId(String categoryId) {
-        String sql = "SELECT t.*, c.type FROM transaction t JOIN category c ON t.category_id = c.id WHERE c.id = ?";
+        String sql = "SELECT transaction.id, transaction.category_id, category.type " +
+                "FROM transaction  " +
+                "JOIN category  ON transaction.category_id = category.id " +
+                "WHERE transaction.category_id = ?";
 
-        return  jdbcTemplate.query(sql, new Object[]{categoryId}, (resultSet, rowNum) -> {
+        return jdbcTemplate.query(sql, new Object[]{categoryId}, (resultSet, rowNum) -> {
             Transaction transaction = new Transaction();
             transaction.setId(resultSet.getString("id"));
-            Category category = new Category();
-            category.setType(Category.CategoryType.valueOf(resultSet.getString("type")));
-            transaction.setCategoryId(category);
+            String categoryIdFromTransaction = resultSet.getString("category_id");
+            if (categoryIdFromTransaction != null) {
+                Category category = categoryRepository.findCategoryById(categoryIdFromTransaction);
+                transaction.setCategoryId(category);
+            }
             return transaction;
         });
     }
+
+
+
 
     public Transaction findTransactionById(String transactionId) {
         String query = "SELECT * FROM transaction WHERE id = ?";

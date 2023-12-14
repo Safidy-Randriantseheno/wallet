@@ -48,7 +48,7 @@ public class TransactionService {
     public List<TransferHistory> getTransferHistoryBetween(LocalDateTime start, LocalDateTime end) {
         return transactionCrudOperations.findByTransferDateBetween(start, end);
     }
-    public Transaction executeDebitCreditTransaction(String accountId, Category categoryId, BigDecimal amount) {
+    public Transaction executeDebitCreditTransaction(String accountId, Category.CategoryType categoryId, BigDecimal amount) {
         try {
             // Use orElseThrow to get the Account or throw an exception if not present
             Account account = Optional.ofNullable(accountCrudOperation.findAccountById(accountId))
@@ -61,7 +61,11 @@ public class TransactionService {
             }
 
             // Get the Category or throw an exception if not present
-            Transaction categoryType = (Transaction) Optional.ofNullable(transactionCrudOperations.findTransactionsByCategoryId(String.valueOf(categoryId)))
+            List<Transaction> transactions = transactionCrudOperations.findTransactionsByCategoryId(String.valueOf(categoryId));
+
+// Get the first transaction from the list, or throw an exception if the list is empty
+            Transaction categoryType = transactions.stream()
+                    .findFirst()
                     .orElseThrow(() -> new RuntimeException("La catégorie avec l'ID " + categoryId + " n'existe pas."));
 
             BigDecimal currentBalance = balance.getBalance_value();
@@ -97,6 +101,27 @@ public class TransactionService {
             throw new RuntimeException("\n" + "Error during transaction operation.", e);
         }
     }
+    @Transactional
+    public Account saveTransaction(String accountId, Category.CategoryType categoryType, BigDecimal amount) {
+        // Create a new Transaction
+        Transaction transaction = new Transaction();
+        transaction.setAmount(amount);
+        transaction.setTransactionDate(LocalDate.now());
+
+        // Create a new Category based on the categoryType
+        Category category = new Category();
+        category.setType(categoryType);
+
+        // Set the Category in the Transaction
+        transaction.setCategoryId(category);
+
+        // Save the transaction
+        transactionCrudOperations.save(transaction);
+
+        // Fetch the updated account with its transaction history
+        return accountCrudOperation.findAccountById(accountId);
+    }
+
 
     public Transaction getById(String id) {
         return transactionCrudOperations.findTransactionById(id);
