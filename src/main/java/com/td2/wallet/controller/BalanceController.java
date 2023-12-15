@@ -2,6 +2,7 @@ package com.td2.wallet.controller;
 
 import com.td2.wallet.model.Balance;
 import com.td2.wallet.model.BalanceHistory;
+import com.td2.wallet.model.BalanceResult;
 import com.td2.wallet.service.BalanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.security.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -45,5 +47,13 @@ public class BalanceController{
     ) {
         List<BalanceHistory> balanceHistory = balanceService.getBalanceHistory(accountId, start, end);
         return new ResponseEntity<>(balanceHistory, HttpStatus.OK);
+    }
+    @GetMapping("/calculate")
+    public ResponseEntity<List<BalanceResult>> calculateBalanceBetweenDates(
+            @RequestParam String accountId,
+            @RequestParam String startDate,
+            @RequestParam String endDate) {
+        List<BalanceResult> result = balanceService.calculateBalanceBetweenDates(accountId, startDate, endDate);
+        return ResponseEntity.ok(result);
     }
 }

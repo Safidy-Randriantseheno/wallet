@@ -1,15 +1,14 @@
 package com.td2.wallet.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @AllArgsConstructor
 @Data
-
+@NoArgsConstructor
+@ToString
+@Builder
 public class BalanceResult {
     private BigDecimal totalCredit;
     private BigDecimal totalDebit;
