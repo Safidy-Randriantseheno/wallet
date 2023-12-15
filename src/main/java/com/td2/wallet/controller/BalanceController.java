@@ -32,7 +32,13 @@ public class BalanceController{
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @GetMapping("/{id}/{date}")
+    public BigDecimal getBalanceByDateAndId(
+            @PathVariable String id,
+            @PathVariable("date") LocalDateTime date) {
 
+        return balanceService.getBalanceByDateTime(id, date);
+    }
     @GetMapping("/history")
     public ResponseEntity<List<BalanceHistory>> getBalanceHistory(
             @RequestParam String accountId,

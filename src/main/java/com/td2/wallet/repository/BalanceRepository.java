@@ -11,8 +11,6 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 
-import java.security.Timestamp;
-
 import java.sql.Timestamp;
 
 import java.time.LocalDate;
@@ -92,6 +90,7 @@ public class BalanceRepository {
         String sql = "SELECT  calculateCategorySumBetweenDates(?, CAST(? AS TIMESTAMP), CAST(? AS TIMESTAMP))";
         return jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(CategorySumResult.class), accountId, startDate, endDate);
 
+    }
     public BigDecimal getBalanceByDateTime(String id, LocalDateTime dateTime) {
         String selectBalanceQuery = "SELECT balance_value FROM balance WHERE id = ? AND balance_date <= ? ORDER BY balance_date DESC LIMIT 1";
         BigDecimal balanceValue = jdbcTemplate.queryForObject(
