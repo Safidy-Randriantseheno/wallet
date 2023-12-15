@@ -25,10 +25,7 @@ public class BalanceService {
     public List<BalanceHistory> getBalanceHistory(String accountId, LocalDateTime start, LocalDateTime end) {
         return balanceRepository.findByAccountIdAndTimestampBetween(accountId, start, end);
     }
-    public BigDecimal getBalanceByDateTime(String id, LocalDateTime date) {
-        // Utilise repository pour récupérer le solde en function de l'ID et de la date et heure
-        return balanceRepository.getBalanceByDateTime(id, date).getBalance_value();
-    }
+
     public List<BalanceResult> calculateBalanceBetweenDates(String accountId, String startDate, String endDate) {
         return balanceRepository.calculateBalanceBetweenDates(accountId, startDate, endDate);
     }
