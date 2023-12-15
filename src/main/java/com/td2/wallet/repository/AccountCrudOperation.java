@@ -65,7 +65,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                     transactions.add(transaction);
                 }
                 Currency currency = findCurrencyById(currencyId);
-                Account.Type type = Account.Type.valueOf(resultSet.getString("account_type"));
+                Account.AccountType type = Account.AccountType.valueOf(resultSet.getString("account_type"));
                 Balance balance = findBalanceById(balanceId);
                 accounts.add(new Account(id, name, currency, type, transactions, balance));
 
@@ -97,7 +97,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                         transactions.add(transaction);
                     }
                     Currency currency = findCurrencyById(currencyId);
-                    Account.Type type = Account.Type.valueOf(resultSet.getString("account_type"));
+                    Account.AccountType type = Account.AccountType.valueOf(resultSet.getString("account_type"));
                     Balance balance = findBalanceById(balanceId);
 
                     return new Account(id, name, currency, type, transactions, balance);
@@ -120,7 +120,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                     Account account = new Account();
                     account.setId(resultSet.getString("id"));
                     account.setName(resultSet.getString("name"));
-                    account.setAccountType(Account.Type.valueOf(resultSet.getString("account_type")));
+                    account.setAccountType(Account.AccountType.valueOf(resultSet.getString("account_type")));
                     String currencyId = resultSet.getString("currency_id");
                     if (currencyId != null) {
                         Currency currency = findCurrencyById(currencyId);
@@ -271,27 +271,39 @@ public class AccountCrudOperation implements CrudOperations<Account> {
     @Override
     public Account save(Account toSave) {
         String query = "INSERT INTO accounts (id, name, currency_id, account_type, transaction_list, balance_id)\n" +
-                "VALUES (?, ?, ?, ?, ?, ?)\n" +
+                "VALUES (?, ?, ?, CAST(? AS account_type), CAST(? AS VARCHAR[]), ?)\n" +
                 "ON CONFLICT (id)\n" +
                 "DO UPDATE SET\n" +
                 "  name = excluded.name,\n" +
                 "  currency_id = excluded.currency_id,\n" +
-                "  account_type = excluded.account_type,\n" +
-                "  transaction_list = excluded.transaction_list,\n" +
+                "  account_type = CAST(excluded.account_type AS account_type),\n" +
+                "  transaction_list = CAST(excluded.transaction_list AS VARCHAR[]),\n" +
                 "  balance_id = excluded.balance_id;";
+
         int rowsAffected = jdbcTemplate.update(query,
                 toSave.getId(),
                 toSave.getName(),
                 toSave.getCurrencyId().getId(),
+                toSave.getAccountType(),
                 toSave.getBalanceId().getId(),
-                convertListToJson(toSave.getTransactionList()),
-                toSave.getAccountType()
+                serializeTransactionList(toSave.getTransactionList()),
+                toSave.getTransactionList()
+
         );
 
         if (rowsAffected > 0) {
             return toSave;
         } else {
 
+            return null;
+        }
+    }
+    private String serializeTransactionList(List<Transaction> transactionList) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(transactionList);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
             return null;
         }
     }

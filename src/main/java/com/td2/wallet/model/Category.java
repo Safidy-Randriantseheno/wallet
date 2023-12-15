@@ -14,6 +14,7 @@ import lombok.*;
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "category_id")
     private String id;
     private String name;
     @Enumerated(EnumType.STRING)
