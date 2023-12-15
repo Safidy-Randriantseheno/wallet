@@ -3,6 +3,7 @@ package com.td2.wallet.controller;
 import com.td2.wallet.model.Balance;
 import com.td2.wallet.model.BalanceHistory;
 import com.td2.wallet.model.BalanceResult;
+import com.td2.wallet.model.CategorySumResult;
 import com.td2.wallet.service.BalanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -54,6 +55,14 @@ public class BalanceController{
             @RequestParam String startDate,
             @RequestParam String endDate) {
         List<BalanceResult> result = balanceService.calculateBalanceBetweenDates(accountId, startDate, endDate);
+        return ResponseEntity.ok(result);
+    }
+    @GetMapping("/sum")
+    public ResponseEntity<List<CategorySumResult>> calculateCategorySumBetweenDates(
+            @RequestParam String accountId,
+            @RequestParam String startDate,
+            @RequestParam String endDate) {
+        List<CategorySumResult> result = balanceService.calculateCategorySumBetweenDates(accountId, startDate, endDate);
         return ResponseEntity.ok(result);
     }
 }

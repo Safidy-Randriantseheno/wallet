@@ -1,17 +1,16 @@
 package com.td2.wallet.repository;
 
-import com.td2.wallet.model.Balance;
-import com.td2.wallet.model.BalanceHistory;
-import com.td2.wallet.model.Category;
-import com.td2.wallet.model.Transaction;
+import com.td2.wallet.model.*;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.security.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -81,7 +80,7 @@ public class BalanceRepository {
         }
     }
     public Balance getBalanceByDateTime(String accountId, LocalDateTime dateTime) {
-        String query = "SELECT * FROM balance WHERE account_id = ? AND timestamp <= ? ORDER BY timestamp DESC LIMIT 1";
+        String query = "SELECT * FROM balance WHERE id = ? AND timestamp <= ? ORDER BY timestamp DESC LIMIT 1";
 
         try {
             return jdbcTemplate.queryForObject(query, new Object[]{accountId, dateTime}, (resultSet, rowNum) -> {
@@ -94,6 +93,14 @@ public class BalanceRepository {
             e.printStackTrace();
             return null;
         }
+    }
+    public List<BalanceResult> calculateBalanceBetweenDates(String accountId, String startDate, String endDate) {
+        String sql = "SELECT  calculateBalanceBetweenDates(?, CAST(? AS TIMESTAMP), CAST(? AS TIMESTAMP))";
+        return jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(BalanceResult.class), accountId, startDate, endDate);
+    }
+    public List<CategorySumResult> calculateCategorySumBetweenDates(String accountId, String startDate, String endDate) {
+        String sql = "SELECT  calculateCategorySumBetweenDates(?, CAST(? AS TIMESTAMP), CAST(? AS TIMESTAMP))";
+        return jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(CategorySumResult.class), accountId, startDate, endDate);
     }
 
 }

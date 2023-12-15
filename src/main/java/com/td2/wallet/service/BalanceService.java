@@ -3,6 +3,7 @@ package com.td2.wallet.service;
 import com.td2.wallet.model.Balance;
 import com.td2.wallet.model.BalanceHistory;
 import com.td2.wallet.model.BalanceResult;
+import com.td2.wallet.model.CategorySumResult;
 import com.td2.wallet.repository.AccountCrudOperation;
 import com.td2.wallet.repository.BalanceRepository;
 import lombok.AllArgsConstructor;
@@ -30,6 +31,9 @@ public class BalanceService {
     }
     public List<BalanceResult> calculateBalanceBetweenDates(String accountId, String startDate, String endDate) {
         return balanceRepository.calculateBalanceBetweenDates(accountId, startDate, endDate);
+    }
+    public List<CategorySumResult> calculateCategorySumBetweenDates(String accountId, String startDate, String endDate) {
+        return balanceRepository.calculateCategorySumBetweenDates(accountId, startDate, endDate);
     }
 
 }
