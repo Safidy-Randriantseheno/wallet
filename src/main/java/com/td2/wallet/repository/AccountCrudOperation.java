@@ -284,7 +284,7 @@ public class AccountCrudOperation implements CrudOperations<Account> {
                 toSave.getId(),
                 toSave.getName(),
                 toSave.getCurrencyId().getId(),
-                toSave.getAccountType().name(), // Convert enum to string
+                toSave.getAccountType(),
                 toSave.getBalanceId().getId(),
                 serializeTransactionList(toSave.getTransactionList()),
                 toSave.getTransactionList()

@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -160,6 +161,25 @@ public class TransactionService {
             e.printStackTrace();
             throw new RuntimeException("Error during transaction operation.", e);
         }
+    }
+    public TransactionResult calculateTransactionSummary(List<Transaction> transactions) {
+        BigDecimal totalIncome = BigDecimal.ZERO;
+        BigDecimal totalExpense = BigDecimal.ZERO;
+
+        for (Transaction transaction : transactions) {
+            if (transaction.getAmount().compareTo(BigDecimal.ZERO) >= 0) {
+                // Si le montant est positif ou nul, considérez-le comme un revenu
+                totalIncome = totalIncome.add(transaction.getAmount());
+            } else {
+                // Sinon, considérez-le comme une dépense
+                totalExpense = totalExpense.add(transaction.getAmount().abs());
+            }
+        }
+
+        return new TransactionResult(totalIncome, totalExpense);
+    }
+    public List<Transaction> getTransactionResult(String accountId, String startDate, String endDate) {
+        return (List<Transaction>) transactionCrudOperations.getTransactionResult(accountId, startDate, endDate);
     }
 
     public Transaction getById(String id) {

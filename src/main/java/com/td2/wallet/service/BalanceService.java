@@ -1,16 +1,14 @@
 package com.td2.wallet.service;
 
-import com.td2.wallet.model.Balance;
-import com.td2.wallet.model.BalanceHistory;
-import com.td2.wallet.model.BalanceResult;
-import com.td2.wallet.model.CategorySumResult;
+import com.td2.wallet.model.*;
 import com.td2.wallet.repository.AccountCrudOperation;
 import com.td2.wallet.repository.BalanceRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.security.Timestamp;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -38,8 +36,7 @@ public class BalanceService {
     public List<BalanceResult> calculateBalanceBetweenDates(String accountId, String startDate, String endDate) {
         return balanceRepository.calculateBalanceBetweenDates(accountId, startDate, endDate);
     }
-
-    }
+}
 
 
 
