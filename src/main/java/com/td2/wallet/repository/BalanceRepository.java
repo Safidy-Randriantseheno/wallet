@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -80,21 +81,20 @@ public class BalanceRepository {
             throw new RuntimeException("Error fetching Balance by ID", e);
         }
     }
-    public Balance getBalanceByDateTime(String accountId, LocalDateTime dateTime) {
-        String query = "SELECT * FROM balance WHERE account_id = ? AND timestamp <= ? ORDER BY timestamp DESC LIMIT 1";
+    public BigDecimal getBalanceByDateTime(String id, LocalDateTime dateTime) {
+        String selectBalanceQuery = "SELECT balance_value FROM balance WHERE id = ? AND balance_date <= ? ORDER BY balance_date DESC LIMIT 1";
+        BigDecimal balanceValue = jdbcTemplate.queryForObject(
+                selectBalanceQuery,
+                BigDecimal.class,
+                id,
+                Timestamp.valueOf(dateTime)
+        );
 
-        try {
-            return jdbcTemplate.queryForObject(query, new Object[]{accountId, dateTime}, (resultSet, rowNum) -> {
-                Balance balance = new Balance();
-                balance.setId(resultSet.getString("id"));
-                balance.setBalance_date(resultSet.getDate("timestamp").toLocalDate());
-                return balance;
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+        return (balanceValue != null) ? balanceValue : BigDecimal.ZERO;
     }
 
-}
+    }
+
+
+
 
