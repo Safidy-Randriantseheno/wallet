@@ -1,18 +1,20 @@
 package com.td2.wallet.repository;
 
-import com.td2.wallet.model.Balance;
-import com.td2.wallet.model.BalanceHistory;
-import com.td2.wallet.model.Category;
-import com.td2.wallet.model.Transaction;
+import com.td2.wallet.model.*;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+
+import java.security.Timestamp;
+
 import java.sql.Timestamp;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -81,6 +83,15 @@ public class BalanceRepository {
             throw new RuntimeException("Error fetching Balance by ID", e);
         }
     }
+
+    public List<BalanceResult> calculateBalanceBetweenDates(String accountId, String startDate, String endDate) {
+        String sql = "SELECT  calculateBalanceBetweenDates(?, CAST(? AS TIMESTAMP), CAST(? AS TIMESTAMP))";
+        return jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(BalanceResult.class), accountId, startDate, endDate);
+    }
+    public List<CategorySumResult> calculateCategorySumBetweenDates(String accountId, String startDate, String endDate) {
+        String sql = "SELECT  calculateCategorySumBetweenDates(?, CAST(? AS TIMESTAMP), CAST(? AS TIMESTAMP))";
+        return jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(CategorySumResult.class), accountId, startDate, endDate);
+
     public BigDecimal getBalanceByDateTime(String id, LocalDateTime dateTime) {
         String selectBalanceQuery = "SELECT balance_value FROM balance WHERE id = ? AND balance_date <= ? ORDER BY balance_date DESC LIMIT 1";
         BigDecimal balanceValue = jdbcTemplate.queryForObject(

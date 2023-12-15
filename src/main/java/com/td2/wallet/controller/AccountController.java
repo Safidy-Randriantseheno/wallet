@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -33,13 +34,14 @@ public class AccountController {
         return accountService.saveAll(accounts);
 
     }
-    @PostMapping("/save/transaction/accountId/")
-    public Transaction saveTransactionByAccountId(
+    @PostMapping("/performTransaction")
+    public Account performTransaction(
             @RequestParam String accountId,
-            @RequestBody Category category,
+            @RequestParam String transactionCategoryType,
             @RequestParam BigDecimal amount
-            ){
-        return transactionService.executeDebitCreditTransaction(accountId, category, amount);
+    ) {
+        return transactionService.saveTransaction(accountId, Category.CategoryType.valueOf(transactionCategoryType), amount);
+
     }
 
     @PostMapping("/save")

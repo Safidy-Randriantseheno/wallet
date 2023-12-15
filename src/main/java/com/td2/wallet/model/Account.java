@@ -24,14 +24,14 @@ public class Account {
     @JoinColumn(name = "currency_id")
     private Currency currencyId;
     @Enumerated(EnumType.STRING)
-    private Type accountType;
+    private AccountType accountType;
     @ManyToOne
     @JoinColumn(name = "transaction_id")
     private List<Transaction> transactionList;
     @OneToOne
     @JoinColumn(name = "balance_id")
     private Balance balanceId;
-    public enum Type {
+    public enum AccountType {
         bank, cash, mobile_money
     }
 

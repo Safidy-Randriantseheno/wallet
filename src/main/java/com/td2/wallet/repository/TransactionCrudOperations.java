@@ -41,11 +41,19 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
             while (resultSet.next()) {
                 String id = resultSet.getString("id");
                 String accountId = resultSet.getString("account_id");
-                Account account = accountCrudOperation.findAccountById(accountId);
+                Account account = accountCrudOperation.findAccountId(accountId);
+                List<Account> accounts = new ArrayList<>();
+                if (accountId != null) {
+                    accounts.add(account);
+                }
                 BigDecimal amount = resultSet.getBigDecimal("amount");
                 LocalDate transactionDate = resultSet.getDate("transaction_date").toLocalDate();
                 String category = resultSet.getString("category_id");
                 Category categoryId = categoryRepository.findCategoryById(category);
+                List<Category> categories = new ArrayList<>();
+                if (categoryId != null) {
+                    categories.add(categoryId);
+                }
                 transaction.add(new Transaction(id,account,amount,transactionDate,categoryId));
 
             }
@@ -57,14 +65,14 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
 
     @Override
     public List<Transaction> saveAll(List<Transaction> toSave) {
-        String query = "INSERT INTO transaction(id, account_id, label, transaction_type, amount, transaction_date) " +
-                "VALUES (?, ?, ?, ?, ?, ?) " +
-                "ON CONFLICT (id) DO UPDATE " +
-                "SET label = excluded.label, " +
-                "    transaction_type = excluded.transaction_type, " +
-                "    amount = excluded.amount, " +
-                "    transaction_date = excluded.transaction_date, " +
-                "    account_id = excluded.account_id";
+        String query = "INSERT INTO transaction ( amount, transaction_date, account_id, category_id)\n" +
+                "VALUES ( ?, ?, ?, ?)\n" +
+                "ON CONFLICT (id)\n" +
+                "DO UPDATE SET\n" +
+                "  amount = excluded.amount,\n" +
+                "  transaction_date = excluded.transaction_date,\n" +
+                "  account_id = excluded.account_id,\n" +
+                "  category_id = excluded.category_id;\n" ;
 
         jdbcTemplate.batchUpdate(query, new BatchPreparedStatementSetter() {
 
@@ -88,21 +96,21 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
     }
     @Override
     public Transaction  save(Transaction toSave) {
-        String query = "INSERT INTO transaction( amount, transaction_date, account_id, category_id) " +
-                "VALUES ( ?,?,?,?) " +
-                "ON CONFLICT (id) DO UPDATE " +
-                "SET label = excluded.label, " +
-                "    transaction_type = excluded.transaction_type, " +
-                "    amount = excluded.amount, " +
-                "    transaction_date = excluded.transaction_date," +
-                "    account_id = excluded.account_id";
+        String query = "INSERT INTO transaction ( amount, transaction_date, account_id, category_id)\n" +
+                "VALUES ( ?, ?, ?, ?)\n" +
+                "ON CONFLICT (id)\n" +
+                "DO UPDATE SET\n" +
+                "  amount = excluded.amount,\n" +
+                "  transaction_date = excluded.transaction_date,\n" +
+                "  account_id = excluded.account_id,\n" +
+                "  category_id = excluded.category_id;\n" ;
 
 
         int rowsAffected = jdbcTemplate.update(query,
-                toSave.getCategoryId().builder().build(),
                 toSave.getAmount(),
                 toSave.getTransactionDate(),
-                toSave.getAccountId().getId()
+                toSave.getAccountId().getId(),
+                toSave.getCategoryId().getId()
         );
 
         if (rowsAffected > 0) {
@@ -225,17 +233,25 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
         return transaction;
     }
     public List<Transaction> findTransactionsByCategoryId(String categoryId) {
-        String sql = "SELECT t.*, c.type FROM transaction t JOIN category c ON t.category_id = c.id WHERE c.id = ?";
+        String sql = "SELECT transaction.id, transaction.category_id, category.type " +
+                "FROM transaction  " +
+                "JOIN category  ON transaction.category_id = category.id " +
+                "WHERE transaction.category_id = ?";
 
-        return  jdbcTemplate.query(sql, new Object[]{categoryId}, (resultSet, rowNum) -> {
+        return jdbcTemplate.query(sql, new Object[]{categoryId}, (resultSet, rowNum) -> {
             Transaction transaction = new Transaction();
             transaction.setId(resultSet.getString("id"));
-            Category category = new Category();
-            category.setType(Category.CategoryType.valueOf(resultSet.getString("type")));
-            transaction.setCategoryId(category);
+            String categoryIdFromTransaction = resultSet.getString("category_id");
+            if (categoryIdFromTransaction != null) {
+                Category category = categoryRepository.findCategoryById(categoryIdFromTransaction);
+                transaction.setCategoryId(category);
+            }
             return transaction;
         });
     }
+
+
+
 
     public Transaction findTransactionById(String transactionId) {
         String query = "SELECT * FROM transaction WHERE id = ?";
