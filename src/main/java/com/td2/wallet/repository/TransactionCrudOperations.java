@@ -41,7 +41,7 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
             while (resultSet.next()) {
                 String id = resultSet.getString("id");
                 String accountId = resultSet.getString("account_id");
-                Account account = accountCrudOperation.findAccountById(accountId);
+                Account account = accountCrudOperation.findAccountId(accountId);
                 List<Account> accounts = new ArrayList<>();
                 if (accountId != null) {
                     accounts.add(account);
@@ -65,14 +65,14 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
 
     @Override
     public List<Transaction> saveAll(List<Transaction> toSave) {
-        String query = "INSERT INTO transaction(id, account_id, label, transaction_type, amount, transaction_date) " +
-                "VALUES (?, ?, ?, ?, ?, ?) " +
-                "ON CONFLICT (id) DO UPDATE " +
-                "SET label = excluded.label, " +
-                "    transaction_type = excluded.transaction_type, " +
-                "    amount = excluded.amount, " +
-                "    transaction_date = excluded.transaction_date, " +
-                "    account_id = excluded.account_id";
+        String query = "INSERT INTO transaction ( amount, transaction_date, account_id, category_id)\n" +
+                "VALUES ( ?, ?, ?, ?)\n" +
+                "ON CONFLICT (id)\n" +
+                "DO UPDATE SET\n" +
+                "  amount = excluded.amount,\n" +
+                "  transaction_date = excluded.transaction_date,\n" +
+                "  account_id = excluded.account_id,\n" +
+                "  category_id = excluded.category_id;\n" ;
 
         jdbcTemplate.batchUpdate(query, new BatchPreparedStatementSetter() {
 
@@ -109,7 +109,7 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
         int rowsAffected = jdbcTemplate.update(query,
                 toSave.getAmount(),
                 toSave.getTransactionDate(),
-                toSave.getAccountId(),
+                toSave.getAccountId().getId(),
                 toSave.getCategoryId().getId()
         );
 

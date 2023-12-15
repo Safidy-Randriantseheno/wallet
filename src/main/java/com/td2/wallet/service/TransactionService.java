@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -121,7 +122,45 @@ public class TransactionService {
         // Fetch the updated account with its transaction history
         return accountCrudOperation.findAccountById(accountId);
     }
+    @Transactional
+    public Account saveNewTransactionWithNewCategory(String accountId, Category.CategoryType categoryType, BigDecimal amount, String categoryName) {
+        try {
+            // Use orElseThrow to get the Account or throw an exception if not present
+            Account account = Optional.ofNullable(accountCrudOperation.findAccountById(accountId))
+                    .orElseThrow(() -> new RuntimeException("Le compte avec l'ID " + accountId + " n'existe pas."));
 
+            // Create a new Category with type and name
+            Category newCategory = Category.builder()
+                    .id(UUID.randomUUID().toString())
+                    .type(categoryType)
+                    .name(categoryName)
+                    .build();
+
+            // Save the new category
+            categoryRepository.save(newCategory);
+
+            // Create a new Transaction with a new ID and associate it with the new category
+            Transaction newTransaction = Transaction.builder()
+                    .id(UUID.randomUUID().toString())
+                    .accountId(account)
+                    .amount(amount)
+                    .transactionDate(LocalDate.now())
+                    .categoryId(newCategory)
+                    .build();
+
+            // Save the new transaction
+            transactionCrudOperations.save(newTransaction);
+            List<Transaction> transactions = account.getTransactionList();
+            transactions.add(newTransaction);
+            account.setTransactionList(transactions);
+            accountCrudOperation.save(account);
+
+            return account;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error during transaction operation.", e);
+        }
+    }
 
     public Transaction getById(String id) {
         return transactionCrudOperations.findTransactionById(id);
