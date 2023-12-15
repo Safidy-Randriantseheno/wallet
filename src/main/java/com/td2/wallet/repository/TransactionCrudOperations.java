@@ -190,7 +190,6 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
                     String typeTransaction = resultSet.getString("transaction_type");
                     LocalDateTime date = resultSet.getDate("transfer_date").toLocalDate().atStartOfDay();
                     Transaction transactionType = findTransactionByType(typeTransaction);
-
                     // Convert the single transaction to a list
                     List<Transaction> transactionsType = new ArrayList<>();
                     if (transactionType != null) {
@@ -287,6 +286,48 @@ public class TransactionCrudOperations implements CrudOperations<Transaction> {
 
         return transaction;
     }
+    public  TransactionResult getTransactionResult(String accountId, String startDate, String endDate) {
+        String sql = "SELECT transaction.amount, category.type FROM transaction " +
+                "JOIN category ON transaction.category_id = category.id " +
+                "WHERE transaction.account_id = ? AND transaction.transaction_date BETWEEN ? AND ?";
+
+        List<Transaction> transactions = new ArrayList<>();
+
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, accountId);
+            java.sql.Date startDateSql = java.sql.Date.valueOf(startDate);
+            java.sql.Date endDateSql = java.sql.Date.valueOf(endDate);
+
+            statement.setDate(2, startDateSql);
+            statement.setDate(3, endDateSql);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    String id = resultSet.getString("id");
+                    Account account = accountCrudOperation.findAccountId(accountId);
+                    List<Account> accounts = new ArrayList<>();
+                    if (accountId != null) {
+                        accounts.add(account);
+                    }
+                    BigDecimal amount = resultSet.getBigDecimal("amount");
+                    LocalDate transactionDate = resultSet.getDate("transaction_date").toLocalDate();
+                    String category = resultSet.getString("category_id");
+                    Category categoryId = categoryRepository.findCategoryById(category);
+                    List<Category> categories = new ArrayList<>();
+                    if (categoryId != null) {
+                        categories.add(categoryId);
+                    }
+                    transactions.add(new Transaction(id,account,amount,transactionDate,categoryId));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving transactions", e);
+        }
+
+        return (TransactionResult) transactions;
+    }
+
 }
 
 
